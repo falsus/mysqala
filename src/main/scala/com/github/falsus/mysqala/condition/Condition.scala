@@ -32,4 +32,7 @@ abstract class Condition {
     isAnd = false
     this
   }
+
+  def AND(cond: Condition) = and(cond)
+  def OR(cond: Condition) = or(cond)
 }

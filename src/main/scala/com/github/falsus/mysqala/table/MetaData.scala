@@ -65,7 +65,7 @@ package table {
   object MetaData {
     def getMetaDatas[A](table: Table[A], conn: Connection, tableClass: Class[A], nameResolver: NameResolver) = {
       val metaData = new MetaData(table, conn, tableClass, nameResolver)
-
+      
       (metaData.databaseName, metaData.tableName, metaData.columns)
     }
   }

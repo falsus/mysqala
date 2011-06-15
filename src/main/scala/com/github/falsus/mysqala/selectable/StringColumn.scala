@@ -19,6 +19,8 @@ package selectable {
       new InCondition(this, value: _*)
     }
 
+    def IN(value: String*) = in(value: _*)
+
     override def toField(rs: ResultSet, index: Int): AnyRef = {
       if (propertyType == classOf[Option[_]]) {
         if (rs.getString(index) != null) Some(rs.getString(index)) else None

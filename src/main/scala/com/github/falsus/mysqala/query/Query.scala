@@ -38,6 +38,10 @@ package query {
       this
     }
 
+    def WHERE(cond: Condition) = where(cond)
+    def OR(cond: Condition) = or(cond)
+    def AND(cond: Condition) = and(cond)
+
     implicit def columnToOrderedColumn(col: Column[_, _]): OrderedColumn = {
       new OrderedColumn(col, true)
     }
@@ -60,5 +64,9 @@ package query {
       offsetOption = Some(off)
       this
     }
+
+    def ORDER_BY(columns: OrderedColumn*) = order_by(columns: _*)
+    def LIMIT(lim: Int) = limit(lim)
+    def OFFSET(off: Int) = offset(off)
   }
 }

@@ -52,6 +52,9 @@ package query {
       this
     }
 
+    def FROM[A](table: Table[A]) = from(table)
+    def JOIN[A](table: Table[A], on: Condition) = join(table, on)
+
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       rawQuery.append("DELETE ")
 

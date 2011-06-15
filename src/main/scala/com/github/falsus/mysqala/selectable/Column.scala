@@ -22,6 +22,9 @@ package selectable {
       new OrderedColumn(this, false)
     }
 
+    def ASC = asc
+    def DESC = desc
+    
     def toField(rs: ResultSet, index: Int): AnyRef
 
     override def hashCode() = {

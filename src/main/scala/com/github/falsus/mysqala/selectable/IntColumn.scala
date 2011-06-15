@@ -19,6 +19,8 @@ package selectable {
       new InCondition(this, value: _*)
     }
 
+    def IN(value: Int*) = in(value: _*)
+
     def >(value: Int): LowerCondition[A, Int] = {
       new LowerCondition(this, value)
     }

@@ -14,6 +14,8 @@ package selectable {
     def between(value: java.util.Date): Condition = {
       null
     }
+    
+    def BETWEEN(value: java.util.Date) = between(value)
 
     def >(value: java.util.Date): LowerCondition[A, java.util.Date] = {
       new LowerCondition(this, value)

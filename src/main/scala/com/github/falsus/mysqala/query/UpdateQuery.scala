@@ -16,6 +16,8 @@ package query {
       this
     }
 
+    def SET(sets: SameValueCondition[_, _]*) = set(sets: _*)
+    
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       val rawQuery = new StringBuilder("UPDATE ")
       var first = true

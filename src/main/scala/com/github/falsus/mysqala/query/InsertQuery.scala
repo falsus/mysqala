@@ -15,6 +15,8 @@ package query {
       new SelectQuery(Some(this), conn, columns: _*)
     }
 
+    def SELECT(columns: Selectable*) = select(columns: _*)
+
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       rawQuery.append("INSERT INTO ")
       rawQuery.append(table.toRawQuerySingle)
