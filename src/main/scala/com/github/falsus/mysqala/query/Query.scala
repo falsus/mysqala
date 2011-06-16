@@ -42,10 +42,6 @@ package query {
     def OR(cond: Condition) = or(cond)
     def AND(cond: Condition) = and(cond)
 
-    implicit def columnToOrderedColumn(col: Column[_, _]): OrderedColumn = {
-      new OrderedColumn(col, true)
-    }
-
     def orderBy(columns: OrderedColumn*) = {
       orderedColumns = columns
       this

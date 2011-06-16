@@ -1,16 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-  <classpathentry kind="src" path="src/test/scala" output="target/test-classes" including="**/*.scala|**/*.java|**/*.java"/>
-  <classpathentry kind="src" path="src/main/scala" including="**/*.scala|**/*.java|**/*.java"/>
-  <classpathentry kind="output" path="target/classes"/>
-  <classpathentry kind="var" path="M2_REPO/com/h2database/h2/1.2.138/h2-1.2.138.jar" sourcepath="M2_REPO/com/h2database/h2/1.2.138/h2-1.2.138-sources.jar">
-    <attributes>
-      <attribute value="jar:file:/C:/Users/suzuki/.m2/repository/com/h2database/h2/1.2.138/h2-1.2.138-javadoc.jar!/" name="javadoc_location"/>
-    </attributes>
-  </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/org/javassist/javassist/3.14.0-GA/javassist-3.14.0-GA.jar" sourcepath="M2_REPO/org/javassist/javassist/3.14.0-GA/javassist-3.14.0-GA-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/junit/junit/4.8.2/junit-4.8.2.jar" sourcepath="M2_REPO/junit/junit/4.8.2/junit-4.8.2-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.13/mysql-connector-java-5.1.13.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/scala-tools/testing/specs_2.9.0-1/1.6.8/specs_2.9.0-1-1.6.8.jar" sourcepath="M2_REPO/org/scala-tools/testing/specs_2.9.0-1/1.6.8/specs_2.9.0-1-1.6.8-sources.jar"/>
-  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-  <classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/scala"/>
+	<classpathentry including="**/*.java" kind="src" path="src/main/scala"/>
+	<classpathentry kind="con" path="org.eclipse.iam.jdt.core.mavenClasspathContainer"/>
+	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

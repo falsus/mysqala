@@ -59,10 +59,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_2.9.0-1</artifactId>
-      <version>1.6.8</version>
-      <scope>test</scope>
+    	<groupId>org.scala-tools.testing</groupId>
+    	<artifactId>specs_2.9.0-1</artifactId>
+    	<version>1.6.8</version>
+    	<scope>test</scope>
+    	<optional>false</optional>
     </dependency>
   </dependencies>
 

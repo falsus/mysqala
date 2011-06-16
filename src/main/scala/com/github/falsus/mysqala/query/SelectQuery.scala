@@ -111,16 +111,16 @@ package query {
             rawQuery.append(" DESC")
           }
         }
+      }
 
-        if (limitOption != None) {
-          rawQuery.append(" LIMIT ?")
-          values += limitOption.get
-        }
+      if (limitOption != None) {
+        rawQuery.append(" LIMIT ?")
+        values += limitOption.get
+      }
 
-        if (offsetOption != None) {
-          rawQuery.append(" OFFSET ?")
-          values += offsetOption.get
-        }
+      if (offsetOption != None) {
+        rawQuery.append(" OFFSET ?")
+        values += offsetOption.get
       }
     }
 
