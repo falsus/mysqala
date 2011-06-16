@@ -9,7 +9,7 @@ package table {
   import java.lang.reflect.Field
   import scala.collection.mutable.ListBuffer
 
-  class MetaData[A](val table: Table[A], val conn: Connection, val tableClass: Class[A], val nameResolver: NameResolver) extends Using {
+  class TableMetaData[A](val conn: Connection, val tableClass: Class[A], val nameResolver: NameResolver) extends Using {
     lazy val defaultResolver = new DefaultNameResolver()
 
     lazy val databaseName = {
@@ -31,8 +31,8 @@ package table {
       }
     }
 
-    lazy val columns = {
-      var colsBuf = ListBuffer[Column[A, _]]()
+    lazy val columnMetaDatas = {
+      var colsBuf = ListBuffer[ColumnMetaData]()
       var columnTypes = Map[String, String]()
 
       using(conn.getMetaData.getColumns(databaseName.toLowerCase, null, tableName, "%")) { rs =>
@@ -43,7 +43,7 @@ package table {
 
       for (field <- tableClass.getDeclaredFields) {
         nameResolver.resolveField(tableClass, field) match {
-          case Some(name) => colsBuf += getColumn(field, name, columnTypes(name))
+          case Some(name) => colsBuf += getColumnMetaData(field, name, columnTypes(name))
           case None =>
         }
       }
@@ -51,22 +51,14 @@ package table {
       colsBuf.toList
     }
 
-    def getColumn(field: Field, columnName: String, columnType: String): Column[A, _] = {
+    def getColumnMetaData(field: Field, columnName: String, columnType: String): ColumnMetaData = {
       // TODO:support all types
       columnType match {
-        case "integer" => new IntColumn(table, field.getName, columnName, field.getType, classOf[Int])
-        case "timestamp" => new DateColumn(table, field.getName, columnName, field.getType, classOf[java.sql.Timestamp])
-        case "clob" => new LongColumn(table, field.getName, columnName, field.getType, classOf[Long])
-        case "varchar" => new StringColumn(table, field.getName, columnName, field.getType, classOf[String])
+        case "integer" => new ColumnMetaData(field.getName, columnName, field.getType, classOf[Int])
+        case "timestamp" => new ColumnMetaData(field.getName, columnName, field.getType, classOf[java.sql.Timestamp])
+        case "clob" => new ColumnMetaData(field.getName, columnName, field.getType, classOf[Long])
+        case "varchar" => new ColumnMetaData(field.getName, columnName, field.getType, classOf[String])
       }
-    }
-  }
-
-  object MetaData {
-    def getMetaDatas[A](table: Table[A], conn: Connection, tableClass: Class[A], nameResolver: NameResolver) = {
-      val metaData = new MetaData(table, conn, tableClass, nameResolver)
-      
-      (metaData.databaseName, metaData.tableName, metaData.columns)
     }
   }
 }

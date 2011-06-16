@@ -37,6 +37,8 @@ package table {
     def getStringColumn(propertyName: String): StringColumn[A]
     def getDateColumn(propertyName: String): DateColumn[A]
 
+    def cloneForInnerJoin: Table[A]
+
     override def hashCode(): Int = {
       tableName.hashCode
     }
@@ -50,10 +52,10 @@ package table {
   }
 
   object Table {
-    var simpleTableNames = Map[String, Table[_]]()
+    var simpleTableNames = Map[String, String]()
 
-    def toSimpleTableName(table: Table[_]) = {
-      val baseName = table.tableName.substring(0, 1)
+    def toSimpleTableName(tableName: String) = {
+      val baseName = tableName.substring(0, 1)
       var count = 1
       var name = baseName
 
@@ -62,7 +64,7 @@ package table {
         count += 1
       }
 
-      simpleTableNames += name -> table
+      simpleTableNames += name -> tableName
       name
     }
   }

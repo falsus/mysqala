@@ -14,7 +14,7 @@ package query {
     var lastJoinTable: FromTable[_] = null
     val columns: List[Selectable] = colsArray.toList
 
-    class FromTable[A](val table: Table[A], val on: Option[Condition] = None) {
+    class FromTable[A](val table: Table[A], var on: Option[Condition] = None) {
       var next: Option[FromTable[_]] = None
 
       def nextTable = next
@@ -48,14 +48,20 @@ package query {
       this
     }
 
-    def join[A](table: Table[A], on: Condition) = {
-      lastJoinTable = lastJoinTable.join(new FromTable(table, Some(on)))
+    def join[A](table: Table[A]) = {
+      lastJoinTable = lastJoinTable.join(new FromTable(table))
 
       this
     }
 
+    def on(on_ : Condition) = {
+      lastJoinTable.on = Some(on_)
+      this
+    }
+
     def FROM[A](table: Table[A]) = from(table)
-    def JOIN[A](table: Table[A], on: Condition) = join(table, on)
+    def JOIN[A](table: Table[A]) = join(table)
+    def ON(on_ : Condition) = on(on_)
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       rawQuery.append("SELECT ")

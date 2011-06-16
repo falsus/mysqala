@@ -1,6 +1,7 @@
 package com.github.falsus.mysqala
 
 import table.Table
+import condition.SameColumnCondition
 
 package selectable {
   import java.sql.ResultSet
@@ -14,6 +15,10 @@ package selectable {
       databaseName
     }
 
+    def ==[C, D](value: Column[C, D]): SameColumnCondition[A, B, C, D] = {
+      new SameColumnCondition(this, value)
+    }
+
     def asc = {
       new OrderedColumn(this, true)
     }
@@ -24,7 +29,7 @@ package selectable {
 
     def ASC = asc
     def DESC = desc
-    
+
     def toField(rs: ResultSet, index: Int): AnyRef
 
     override def hashCode() = {
@@ -36,6 +41,10 @@ package selectable {
         case col: Column[_, _] => col.parent == parent && col.propertyName == propertyName
         case _ => false
       }
+    }
+
+    override def toString(): String = {
+      parent.tableName + "." + databaseName + "(" + columnType + ") " + propertyName
     }
   }
 }

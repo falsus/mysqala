@@ -7,16 +7,39 @@ import condition.Condition
 import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn, StringColumn, LongColumn, DateColumn, OrderedColumn }
 
 package table {
-  class TableImpl[A](val connectionManager: ConnectionManager, val tableClass: Class[A], val nameResolver: NameResolver = new DefaultNameResolver()) extends Table[A] {
-    val (databaseName, tableName, columns) = MetaData.getMetaDatas(this, conn, tableClass, nameResolver)
+  import java.sql.Timestamp
 
-    lazy val shortDatabaseTableName = Table.toSimpleTableName(this)
+  class TableImpl[A](val connectionManager: ConnectionManager, val tableClass: Class[A], val databaseName: String,
+    val tableName: String, val shortDatabaseTableName: String, val columnMetaDatas: List[ColumnMetaData]) extends Table[A] {
     lazy val toRawQuery = tableName + " " + shortDatabaseTableName
     lazy val toRawQuerySingle = tableName
+    lazy val columns = {
+      for {
+        columnMetaData <- columnMetaDatas
+        column = createColumn(columnMetaData)
+      } yield column
+    }
 
     private def conn = connectionManager.connection
 
     implicit def columnToOrderedColumn(col: Column[_, _]): OrderedColumn = new OrderedColumn(col, true)
+
+    def createColumn(columnMetaData: ColumnMetaData): Column[A, _] = {
+      columnMetaData.columnClass match {
+        case c if c == classOf[Int] => new IntColumn(this, columnMetaData.fieldName, columnMetaData.columnName, columnMetaData.fieldClass, columnMetaData.columnClass)
+        case c if c == classOf[Timestamp] => new DateColumn(this, columnMetaData.fieldName, columnMetaData.columnName, columnMetaData.fieldClass, columnMetaData.columnClass)
+        case c if c == classOf[Long] => new LongColumn(this, columnMetaData.fieldName, columnMetaData.columnName, columnMetaData.fieldClass, columnMetaData.columnClass)
+        case c if c == classOf[String] => new StringColumn(this, columnMetaData.fieldName, columnMetaData.columnName, columnMetaData.fieldClass, columnMetaData.columnClass)
+      }
+    }
+
+    def this(connectionManager: ConnectionManager, tableClass: Class[A], metaData: TableMetaData[A]) = {
+      this(connectionManager, tableClass, metaData.databaseName, metaData.tableName, Table.toSimpleTableName(metaData.tableName), metaData.columnMetaDatas)
+    }
+
+    def this(connectionManager: ConnectionManager, tableClass: Class[A], nameResolver: NameResolver = new DefaultNameResolver()) = {
+      this(connectionManager, tableClass, new TableMetaData(connectionManager.connection, tableClass, nameResolver))
+    }
 
     def select(columns: Selectable*) = {
       columns match {
@@ -66,10 +89,10 @@ package table {
         column <- columns
         if (column.propertyName == propertyName)
       } {
-        return column match { case numberColumn: IntColumn[A] => numberColumn case _ => null }
+        return column match { case numberColumn: IntColumn[A] => numberColumn case _ => throw new ColumnTypeException() }
       }
 
-      null
+      throw new ColumnNotExistException()
     }
 
     def getLongColumn(propertyName: String): LongColumn[A] = {
@@ -77,10 +100,10 @@ package table {
         column <- columns
         if (column.propertyName == propertyName)
       } {
-        return column match { case numberColumn: LongColumn[A] => numberColumn case _ => null }
+        return column match { case numberColumn: LongColumn[A] => numberColumn case _ => throw new ColumnTypeException() }
       }
 
-      null
+      throw new ColumnNotExistException()
     }
 
     def getStringColumn(propertyName: String): StringColumn[A] = {
@@ -88,10 +111,10 @@ package table {
         column <- columns
         if (column.propertyName == propertyName)
       } {
-        return column match { case stringColumn: StringColumn[A] => stringColumn case _ => null }
+        return column match { case stringColumn: StringColumn[A] => stringColumn case _ => throw new ColumnTypeException() }
       }
 
-      null
+      throw new ColumnNotExistException()
     }
 
     def getDateColumn(propertyName: String): DateColumn[A] = {
@@ -99,10 +122,14 @@ package table {
         column <- columns
         if (column.propertyName == propertyName)
       } {
-        return column match { case dateColumn: DateColumn[A] => dateColumn case _ => null }
+        return column match { case dateColumn: DateColumn[A] => dateColumn case _ => throw new ColumnTypeException() }
       }
 
-      null
+      throw new ColumnNotExistException()
+    }
+
+    def cloneForInnerJoin: Table[A] = {
+      new TableImpl(this.connectionManager, this.tableClass, this.databaseName, this.tableName, Table.toSimpleTableName(this.tableName), columnMetaDatas)
     }
 
     override def hashCode(): Int = {
@@ -116,4 +143,7 @@ package table {
       }
     }
   }
+
+  class ColumnNotExistException extends Exception
+  class ColumnTypeException extends Exception
 }
