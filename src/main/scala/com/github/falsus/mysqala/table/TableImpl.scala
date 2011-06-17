@@ -52,7 +52,7 @@ package table {
       new LastInsertId()
     }
 
-    lazy val delete = {
+    def delete = {
       new DeleteQuery(conn)
     }
 
@@ -60,11 +60,11 @@ package table {
       new UpdateQuery(conn, tables: _*)
     }
 
-    lazy val insert = {
+    def insert = {
       new PreInsertQuery[A](this, conn)
     }
 
-    lazy val * = {
+    def * = {
       new WildCardInTable(this)
     }
 
@@ -72,14 +72,16 @@ package table {
       val query = select(columns: _*) from this where cond
       var foundModel: Option[A] = None
 
-      query.execute((models) => {
-        for (model <- models) {
-          model match {
-            case model: A => foundModel = Some(model)
-            case _ =>
+      query.execute { (models) =>
+        {
+          for (model <- models) {
+            model match {
+              case model: A => foundModel = Some(model)
+              case _ =>
+            }
           }
         }
-      })
+      }
 
       foundModel
     }

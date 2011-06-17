@@ -9,61 +9,19 @@ package query {
   import java.sql.Connection
   import scala.collection.mutable.{ ListBuffer, LinkedHashMap }
 
-  class SelectQuery(val insertQuery: Option[InsertQuery[_]], val conn: Connection, colsArray: Selectable*) extends Query with Using {
-    var firstFromTable: FromTable[_] = null
-    var lastJoinTable: FromTable[_] = null
+  class SelectQuery(val insertQuery: Option[InsertQuery[_]], val conn: Connection, colsArray: Selectable*) extends WhereQuery[SelectQuery] with Using {
+    val subInstance = this
     val columns: List[Selectable] = colsArray.toList
 
-    class FromTable[A](val table: Table[A], var on: Option[Condition] = None) {
-      var next: Option[FromTable[_]] = None
-
-      def nextTable = next
-
-      def join[B](joinTable: FromTable[B]) = {
-        next = Some(joinTable)
-        joinTable
-      }
-
-      def toRawQuery(builder: StringBuilder, values: ListBuffer[Any]) {
-        if (on != None) {
-          builder.append(" JOIN ")
-        }
-
-        builder.append(table.toRawQuery)
-
-        on match {
-          case Some(cond) =>
-            builder.append(" ON ")
-            cond.toRawQuery(builder, values)
-          case _ =>
-        }
-
-        next match { case Some(nextFromTable) => nextFromTable.toRawQuery(builder, values) case _ => }
-      }
-    }
-
-    def from[A](table: Table[A]) = {
-      firstFromTable = new FromTable(table)
-      lastJoinTable = firstFromTable
-      this
-    }
-
-    def join[A](table: Table[A]) = {
-      lastJoinTable = lastJoinTable.join(new FromTable(table))
-
-      this
-    }
-
-    def on(on_ : Condition) = {
-      lastJoinTable.on = Some(on_)
-      this
-    }
-
-    def FROM[A](table: Table[A]) = from(table)
-    def JOIN[A](table: Table[A]) = join(table)
-    def ON(on_ : Condition) = on(on_)
-
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
+      insertQuery match {
+        case Some(insertQuery_) =>
+          insertQuery_.build(rawQuery, values)
+          rawQuery.append(" ")
+
+        case _ =>
+      }
+
       rawQuery.append("SELECT ")
 
       var first = true
@@ -81,53 +39,10 @@ package query {
       rawQuery.append(" FROM ")
       firstFromTable.toRawQuery(rawQuery, values)
 
-      if (firstWhereCondition != null) {
-        var first = true
-
-        for ((conditoin, and) <- whereConditions) {
-          if (first) {
-            rawQuery.append(" WHERE ")
-            first = false
-          } else if (and) {
-            rawQuery.append(" AND ")
-          } else {
-            rawQuery.append(" OR ")
-          }
-
-          rawQuery.append("(")
-          conditoin.toRawQuery(rawQuery, values)
-          rawQuery.append(")")
-        }
-      }
-
-      if (orderedColumns != null) {
-        var first = true
-
-        for (orderedColumn <- orderedColumns) {
-          if (first) {
-            rawQuery.append(" ORDER BY ")
-            first = false
-          } else {
-            rawQuery.append(", ")
-          }
-
-          rawQuery.append(orderedColumn.column.toRawQuery)
-
-          if (!orderedColumn.asc) {
-            rawQuery.append(" DESC")
-          }
-        }
-      }
-
-      if (limitOption != None) {
-        rawQuery.append(" LIMIT ?")
-        values += limitOption.get
-      }
-
-      if (offsetOption != None) {
-        rawQuery.append(" OFFSET ?")
-        values += offsetOption.get
-      }
+      buildWhere(rawQuery, values)
+      buildOrder(rawQuery, values)
+      buildLimit(rawQuery, values)
+      buildOffset(rawQuery, values)
     }
 
     override def executeUpdate() = {
@@ -137,9 +52,6 @@ package query {
 
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
-
-      insertQuery.get.build(rawQuery, values)
-      rawQuery.append(" ")
 
       build(rawQuery, values)
 
@@ -160,7 +72,7 @@ package query {
       }
     }
 
-    override def execute(f: (List[Any]) => Unit) = {
+    def execute(f: (List[Any]) => Unit) = {
       if (insertQuery != None) {
         throw new Exception("damedesu")
       }
@@ -198,7 +110,6 @@ package query {
       }
 
       var foundConstructors = LinkedHashMap[Table[_], Tuple2[java.lang.reflect.Constructor[_], List[Column[_, _]]]]()
-
       val classPool = javassist.ClassPool.getDefault
 
       classPool.insertClassPath(new javassist.ClassClassPath(this.getClass()))

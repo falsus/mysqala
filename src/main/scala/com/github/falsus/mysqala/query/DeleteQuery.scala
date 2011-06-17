@@ -8,79 +8,16 @@ package query {
   import java.sql.Connection
   import scala.collection.mutable.ListBuffer
 
-  class DeleteQuery(val conn: Connection) extends Query with Using {
-    var firstFromTable: FromTable[_] = null
-    var lastJoinTable: FromTable[_] = null
-
-    class FromTable[A](val table: Table[A], val on: Option[Condition] = None) {
-      var next: Option[FromTable[_]] = None
-
-      def nextTable = next
-
-      def join[B](joinTable: FromTable[B]) = {
-        next = Some(joinTable)
-        joinTable
-      }
-
-      def toRawQuery(builder: StringBuilder, values: ListBuffer[Any]) {
-        if (on != None) {
-          builder.append(" JOIN ")
-        }
-
-        builder.append(table.toRawQuery)
-
-        on match {
-          case Some(cond) =>
-            builder.append(" ON ")
-            cond.toRawQuery(builder, values)
-          case _ =>
-        }
-
-        next match { case Some(nextFromTable) => nextFromTable.toRawQuery(builder, values) case _ => }
-      }
-    }
-
-    def from[A](table: Table[A]) = {
-      firstFromTable = new FromTable(table)
-      lastJoinTable = firstFromTable
-      this
-    }
-
-    def join[A](table: Table[A], on: Condition) = {
-      lastJoinTable = lastJoinTable.join(new FromTable(table, Some(on)))
-
-      this
-    }
-
-    def FROM[A](table: Table[A]) = from(table)
-    def JOIN[A](table: Table[A], on: Condition) = join(table, on)
+  class DeleteQuery(val conn: Connection) extends WhereQuery[DeleteQuery] with Using {
+    val subInstance = this
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      rawQuery.append("DELETE ")
-
-      rawQuery.append(" FROM ")
+      rawQuery.append("DELETE FROM ")
       firstFromTable.toRawQuery(rawQuery, values)
 
-      var first = true
-
-      if (firstWhereCondition != null) {
-        var first = true
-
-        for ((conditoin, and) <- whereConditions) {
-          if (first) {
-            rawQuery.append(" WHERE ")
-            first = false
-          } else if (and) {
-            rawQuery.append(" AND ")
-          } else {
-            rawQuery.append(" OR ")
-          }
-
-          rawQuery.append("(")
-          conditoin.toRawQuery(rawQuery, values)
-          rawQuery.append(")")
-        }
-      }
+      buildWhere(rawQuery, values)
+      buildOrder(rawQuery, values)
+      buildLimit(rawQuery, values)
     }
 
     override def executeUpdate() = {

@@ -2,14 +2,18 @@ package com.github.falsus.mysqala
 
 import util.Using
 import table.Table
-import condition.{SameValueCondition}
+import condition.{ SameValueCondition }
 
 package query {
   import java.sql.Connection
   import scala.collection.mutable.ListBuffer
-  
-  class UpdateQuery(val conn: Connection, val tables: Table[_]*) extends Query with Using {
+
+  class UpdateQuery(val conn: Connection, tables_ : Table[_]*) extends WhereQuery[UpdateQuery] with Using {
+    val tables = tables_.init
+    val subInstance = this
     var setters: Seq[SameValueCondition[_, _]] = null
+
+    from(tables_.last)
 
     def set(sets: SameValueCondition[_, _]*) = {
       setters = sets
@@ -17,24 +21,20 @@ package query {
     }
 
     def SET(sets: SameValueCondition[_, _]*) = set(sets: _*)
-    
+
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      val rawQuery = new StringBuilder("UPDATE ")
-      var first = true
+      rawQuery.append("UPDATE ")
 
       for (table <- tables) {
-        if (first) {
-          first = false
-        } else {
-          rawQuery.append(", ")
-        }
-
         rawQuery.append(table.toRawQuery)
+        rawQuery.append(", ")
       }
+      
+      firstFromTable.toRawQuery(rawQuery, values)
 
       rawQuery.append(" SET ")
 
-      first = true
+      var first = true
 
       for (setter <- setters) {
         if (first) {
@@ -46,26 +46,9 @@ package query {
         setter.toRawQuery(rawQuery, values)
       }
 
-      if (firstWhereCondition != null) {
-        var first = true
-
-        for ((conditoin, and) <- whereConditions) {
-          if (first) {
-            rawQuery.append(" WHERE ")
-            first = false
-          } else if (and) {
-            rawQuery.append(" AND ")
-          } else {
-            rawQuery.append(" OR ")
-          }
-
-          rawQuery.append("(")
-          conditoin.toRawQuery(rawQuery, values)
-          rawQuery.append(")")
-        }
-      }
-
-      rawQuery.toString
+      buildWhere(rawQuery, values)
+      buildOrder(rawQuery, values)
+      buildLimit(rawQuery, values)
     }
 
     override def executeUpdate(): Int = {
