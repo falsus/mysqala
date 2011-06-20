@@ -13,7 +13,9 @@ import util.Using
 
 package query {
   @RunWith(classOf[JUnitSuiteRunner])
-  object SelectQuerySpec extends SpecificationWithJUnit with Using {
+  class SelectQueryTest extends SpecificationWithJUnit with Using {
+    table.Table.simpleTableNames.clear()
+
     class User(val id: Int, val name: String)
     object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
 

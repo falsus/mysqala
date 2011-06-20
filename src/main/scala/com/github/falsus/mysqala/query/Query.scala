@@ -9,5 +9,6 @@ package query {
   trait Query {
     def executeUpdate(): Int = 0
     def build(rawQuery: StringBuilder, values: ListBuffer[Any]): Unit
+    def freeze(): Unit
   }
 }

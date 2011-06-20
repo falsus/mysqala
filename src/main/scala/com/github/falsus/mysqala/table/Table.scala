@@ -4,12 +4,12 @@ import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn
 import util.Using
 import nameresolver.{ NameResolver, DefaultNameResolver }
 import query.{ SelectQuery, PreInsertQuery, DeleteQuery, UpdateQuery, SelectLastInsertIdQuery }
-import condition.Condition
+import condition.{ Condition, PlaceHolder }
 
 package table {
   import java.sql.{ ResultSet }
   import java.lang.reflect.Field
-  import scala.collection.mutable.ListBuffer
+  import scala.collection.mutable.{ LinkedHashMap, ListBuffer }
 
   trait Table[A] {
     def shortDatabaseTableName: String
@@ -30,6 +30,8 @@ package table {
     def UPDATE(tables: Table[_]*) = update(tables: _*)
     def INSERT = insert
     def * : WildCardInTable
+    def ? = new PlaceHolder()
+
     def find(cond: Condition): Option[A]
 
     def getIntColumn(propertyName: String): IntColumn[A]
@@ -52,7 +54,7 @@ package table {
   }
 
   object Table {
-    var simpleTableNames = Map[String, String]()
+    val simpleTableNames = LinkedHashMap[String, String]()
 
     def toSimpleTableName(tableName: String) = {
       val baseName = tableName.substring(0, 1)
@@ -64,7 +66,7 @@ package table {
         count += 1
       }
 
-      simpleTableNames += name -> tableName
+      simpleTableNames.put(name, tableName)
       name
     }
   }

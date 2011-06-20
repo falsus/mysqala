@@ -48,25 +48,11 @@ package table {
       }
     }
 
-    def last_insert_id() = {
-      new LastInsertId()
-    }
-
-    def delete = {
-      new DeleteQuery(conn)
-    }
-
-    def update(tables: Table[_]*) = {
-      new UpdateQuery(conn, tables: _*)
-    }
-
-    def insert = {
-      new PreInsertQuery[A](this, conn)
-    }
-
-    def * = {
-      new WildCardInTable(this)
-    }
+    def last_insert_id() = new LastInsertId()
+    def delete = new DeleteQuery(conn)
+    def update(tables: Table[_]*) = new UpdateQuery(conn, tables: _*)
+    def insert = new PreInsertQuery[A](this, conn)
+    def * = new WildCardInTable(this)
 
     def find(cond: Condition): Option[A] = {
       val query = select(columns: _*) from this where cond

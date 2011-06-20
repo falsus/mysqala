@@ -43,7 +43,7 @@ package table {
 
       for (field <- tableClass.getDeclaredFields) {
         nameResolver.resolveField(tableClass, field) match {
-          case Some(name) => colsBuf += getColumnMetaData(field, name, columnTypes(name))
+          case Some(name) => if (columnTypes.contains(name)) { colsBuf += getColumnMetaData(field, name, columnTypes(name)) }
           case None =>
         }
       }

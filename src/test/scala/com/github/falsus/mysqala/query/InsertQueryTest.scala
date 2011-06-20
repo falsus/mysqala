@@ -12,8 +12,8 @@ import selectable.{ Column, OrderedColumn }
 import util.Using
 
 package query {
-  @RunWith(classOf[JUnitSuiteRunner])
-  object InsertQuerySpec extends SpecificationWithJUnit with Using {
+  class InsertQueryTest extends SpecificationWithJUnit with Using {
+    table.Table.simpleTableNames.clear()
     class User(val id: Int, val name: String)
     object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
 
@@ -34,30 +34,33 @@ package query {
       stmt.executeUpdate()
     }
 
-    "Callable SQL like command" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.INSERT INTO (id) VALUES (10)
-      val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
+    "build" should {
+      "Callable SQL like command" in {
+        val id = UserTable.getIntColumn("id")
+        val q = UserTable.INSERT INTO (id) VALUES (10)
+        val values = ListBuffer[Any]()
+        val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
+        q.build(rawQuery, values)
 
-      "INSERT INTO users(id) VALUES(?)" must be equalTo rawQuery.toString
-      values.length must be equalTo 1
-      values(0) must be equalTo 10
-    }
+        "INSERT INTO users(id) VALUES(?)" must be equalTo rawQuery.toString
+        values.length must be equalTo 1
+        values(0) must be equalTo 10
+      }
 
-    "Callable SQL like command with SELECT" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.INSERT INTO (id) SELECT (id) FROM UserTable WHERE id == 20
-      val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
+      "Callable SQL like command with SELECT" in {
+        val id = UserTable.getIntColumn("id")
+        val q = UserTable.INSERT INTO (id) SELECT (id) FROM UserTable WHERE id == 20
+        val values = ListBuffer[Any]()
+        val rawQuery = new StringBuilder()
+        val tableName = UserTable.shortDatabaseTableName
 
-      q.build(rawQuery, values)
+        q.build(rawQuery, values)
 
-      "INSERT INTO users(id) SELECT u.id FROM users u WHERE u.id = ?" must be equalTo rawQuery.toString
-      values.length must be equalTo 1
-      values(0) must be equalTo 20
+        "INSERT INTO users(id) SELECT " + tableName + ".id FROM users " + tableName + " WHERE " + tableName + ".id = ?" must be equalTo rawQuery.toString
+        values.length must be equalTo 1
+        values(0) must be equalTo 20
+      }
     }
   }
 }
