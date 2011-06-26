@@ -1,25 +1,25 @@
 package com.github.falsus.mysqala
 
-import org.specs.SpecificationWithJUnit
-import org.specs.runner.JUnitSuiteRunner
-import org.junit.runner.RunWith
-
-import scala.collection.mutable.ListBuffer
-
 import table.{ Table, TableImpl }
 import connection.SingleConnectionManager
 import selectable.{ Column, OrderedColumn }
 import util.Using
+import query.test.model.{ User, Message }
+import query.test.table.{ UserTable, MessageTable }
 
 package query {
+  import org.specs.SpecificationWithJUnit
+  import org.specs.runner.JUnitSuiteRunner
+  import org.junit.runner.RunWith
+
+  import scala.collection.mutable.ListBuffer
+
   @RunWith(classOf[JUnitSuiteRunner])
   class DeleteQueryTest extends SpecificationWithJUnit with Using {
     table.Table.simpleTableNames.clear()
-    class User(val id: Int, val name: String)
-    object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
 
-    class Message(val id: Int, val userId: Int, val parentMessageId: Int, val message: String)
-    object MessageTable extends TableImpl[Message](new SingleConnectionManager(connection), classOf[Message])
+    val users = new UserTable(new SingleConnectionManager(connection))
+    val messages = new MessageTable(new SingleConnectionManager(connection))
 
     lazy val connection = {
       org.h2.Driver.load()
@@ -36,7 +36,7 @@ package query {
     }
 
     "Callable SQL like command" in {
-      val q = UserTable.DELETE FROM UserTable
+      val q = users.DELETE FROM users
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -47,8 +47,8 @@ package query {
     }
 
     "Callable SQL like command with WHERE" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.DELETE FROM UserTable WHERE id == 10
+      val id = users.getIntColumn("id")
+      val q = users.DELETE FROM users WHERE id == 10
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -60,13 +60,13 @@ package query {
     }
 
     "Callable SQL like command with JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.DELETE FROM UserTable JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
+      val q = users.DELETE FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -76,14 +76,14 @@ package query {
     }
 
     "Callable SQL like command with WHERE, AND, OR, JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
-      val message = MessageTable.getStringColumn("message")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
+      val message = messages.getStringColumn("message")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.DELETE FROM UserTable JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello")
+      val q = users.DELETE FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello")
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 

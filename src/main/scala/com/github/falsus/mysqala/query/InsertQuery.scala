@@ -3,19 +3,21 @@ package com.github.falsus.mysqala
 import selectable.{ Selectable, Column }
 import table.Table
 import util.Using
+import connection.ConnectionManager
 
 package query {
-  import java.sql.Connection
   import scala.collection.mutable.ListBuffer
 
-  abstract class InsertQuery[A](val conn: Connection, val table: Table[A], val columns: Column[A, _]*) extends Query with Using {
+  abstract class InsertQuery[A](val connManager: ConnectionManager, val table: Table[A], val columns: Column[A, _]*) extends Query with Using {
     var valueses = ListBuffer[List[Any]]()
 
     def select(columns: Selectable*) = {
-      new SelectQuery(Some(this), conn, columns: _*)
+      new SelectQuery(Some(this), connManager, columns: _*)
     }
 
     def SELECT(columns: Selectable*) = select(columns: _*)
+
+    private def conn = connManager.connection
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       rawQuery.append("INSERT INTO ")
@@ -91,7 +93,7 @@ package query {
     }
   }
 
-  class InsertQuery1[A, B](conn: Connection, table: Table[A], col1: Column[A, B]) extends InsertQuery[A](conn, table, col1) {
+  class InsertQuery1[A, B](connManager: ConnectionManager, table: Table[A], col1: Column[A, B]) extends InsertQuery[A](connManager, table, col1) {
     def values(value1: B) = {
       valueses += List(value1)
       this
@@ -100,7 +102,7 @@ package query {
     def VALUES(value1: B) = values(value1)
   }
 
-  class InsertQuery2[A, B, C](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C]) extends InsertQuery[A](conn, table, col1, col2) {
+  class InsertQuery2[A, B, C](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C]) extends InsertQuery[A](connManager, table, col1, col2) {
     def values(value1: B, value2: C) = {
       valueses += List(value1, value2)
       this
@@ -109,7 +111,7 @@ package query {
     def VALUES(value1: B, value2: C) = values(value1, value2)
   }
 
-  class InsertQuery3[A, B, C, D](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D]) extends InsertQuery[A](conn, table, col1, col2, col3) {
+  class InsertQuery3[A, B, C, D](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D]) extends InsertQuery[A](connManager, table, col1, col2, col3) {
     def values(value1: B, value2: C, value3: D) = {
       valueses += List(value1, value2, value3)
       this
@@ -118,7 +120,7 @@ package query {
     def VALUES(value1: B, value2: C, value3: D) = values(value1, value2, value3)
   }
 
-  class InsertQuery4[A, B, C, D, E](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E]) extends InsertQuery[A](conn, table, col1, col2, col3, col4) {
+  class InsertQuery4[A, B, C, D, E](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E]) extends InsertQuery[A](connManager, table, col1, col2, col3, col4) {
     def values(value1: B, value2: C, value3: D, value4: E) = {
       valueses += List(value1, value2, value3, value4)
       this
@@ -127,7 +129,7 @@ package query {
     def VALUES(value1: B, value2: C, value3: D, value4: E) = values(value1, value2, value3, value4)
   }
 
-  class InsertQuery5[A, B, C, D, E, F](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F]) extends InsertQuery[A](conn, table, col1, col2, col3, col4, col5) {
+  class InsertQuery5[A, B, C, D, E, F](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F]) extends InsertQuery[A](connManager, table, col1, col2, col3, col4, col5) {
     def values(value1: B, value2: C, value3: D, value4: E, value5: F) = {
       valueses += List(value1, value2, value3, value4, value5)
       this
@@ -136,7 +138,7 @@ package query {
     def VALUES(value1: B, value2: C, value3: D, value4: E, value5: F) = values(value1, value2, value3, value4, value5)
   }
 
-  class InsertQuery6[A, B, C, D, E, F, G](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G]) extends InsertQuery[A](conn, table, col1, col2, col3, col4, col5, col6) {
+  class InsertQuery6[A, B, C, D, E, F, G](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G]) extends InsertQuery[A](connManager, table, col1, col2, col3, col4, col5, col6) {
     def values(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G) = {
       valueses += List(value1, value2, value3, value4, value5, value6)
       this
@@ -145,7 +147,7 @@ package query {
     def VALUES(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G) = values(value1, value2, value3, value4, value5, value6)
   }
 
-  class InsertQuery7[A, B, C, D, E, F, G, H](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G], col7: Column[A, H]) extends InsertQuery[A](conn, table, col1, col2, col3, col4, col5, col6, col7) {
+  class InsertQuery7[A, B, C, D, E, F, G, H](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G], col7: Column[A, H]) extends InsertQuery[A](connManager, table, col1, col2, col3, col4, col5, col6, col7) {
     def values(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G, value7: H) = {
       valueses += List(value1, value2, value3, value4, value5, value6, value7)
       this
@@ -154,7 +156,7 @@ package query {
     def VALUES(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G, value7: H) = values(value1, value2, value3, value4, value5, value6, value7)
   }
 
-  class InsertQuery8[A, B, C, D, E, F, G, H, I](conn: Connection, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G], col7: Column[A, H], col8: Column[A, I]) extends InsertQuery[A](conn, table, col1, col2, col3, col4, col5, col6, col7, col8) {
+  class InsertQuery8[A, B, C, D, E, F, G, H, I](connManager: ConnectionManager, table: Table[A], col1: Column[A, B], col2: Column[A, C], col3: Column[A, D], col4: Column[A, E], col5: Column[A, F], col6: Column[A, G], col7: Column[A, H], col8: Column[A, I]) extends InsertQuery[A](connManager, table, col1, col2, col3, col4, col5, col6, col7, col8) {
     def values(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G, value7: H, value8: I) = {
       valueses += List(value1, value2, value3, value4, value5, value6, value7, value8)
       this

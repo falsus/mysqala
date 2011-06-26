@@ -1,14 +1,16 @@
 package com.github.falsus.mysqala
 
+import connection.ConnectionManager
 import util.Using
 import condition.Condition
 import table.Table
 
 package query {
-  import java.sql.Connection
   import scala.collection.mutable.ListBuffer
 
-  class DeleteQuery(val conn: Connection) extends WhereQuery[DeleteQuery] with Using {
+  class DeleteQuery(val connManager: ConnectionManager) extends WhereQuery[DeleteQuery] with Using {
+    private def conn = connManager.connection
+
     val subInstance = this
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
