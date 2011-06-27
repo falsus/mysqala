@@ -10,17 +10,16 @@ import table.{ Table, TableImpl }
 import connection.SingleConnectionManager
 import selectable.{ Column, OrderedColumn }
 import util.Using
+import query.test.model.{ User, Message }
+import query.test.table.{ UserTable, MessageTable }
 
 package query {
   @RunWith(classOf[JUnitSuiteRunner])
   class UpdateQueryTest extends SpecificationWithJUnit with Using {
     table.Table.simpleTableNames.clear()
 
-    class User(val id: Int, val name: String)
-    object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
-
-    class Message(val id: Int, val userId: Int, val parentMessageId: Int, val message: String)
-    object MessageTable extends TableImpl[Message](new SingleConnectionManager(connection), classOf[Message])
+    val users = new UserTable(new SingleConnectionManager(connection))
+    val messages = new MessageTable(new SingleConnectionManager(connection))
 
     lazy val connection = {
       org.h2.Driver.load()
@@ -37,8 +36,8 @@ package query {
     }
 
     "Callable SQL like command" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.UPDATE(UserTable) SET id == 10
+      val id = users.getIntColumn("id")
+      val q = users.UPDATE(users) SET id == 10
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -50,8 +49,8 @@ package query {
     }
 
     "Callable SQL like command with WHERE" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.UPDATE(UserTable) SET id == 20 WHERE id == 10
+      val id = users.getIntColumn("id")
+      val q = users.UPDATE(users) SET id == 20 WHERE id == 10
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -64,13 +63,13 @@ package query {
     }
 
     "Callable SQL like command with JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.UPDATE(UserTable) JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET id == 10
+      val q = users.UPDATE(users) JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET id == 10
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -82,14 +81,14 @@ package query {
     }
 
     "Callable SQL like command with WHERE, AND, OR, JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
-      val message = MessageTable.getStringColumn("message")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
+      val message = messages.getStringColumn("message")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.UPDATE(UserTable) JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET (id == 10) WHERE id == 8 OR (messageId == 10 AND message == "hello")
+      val q = users.UPDATE(users) JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET (id == 10) WHERE id == 8 OR (messageId == 10 AND message == "hello")
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 

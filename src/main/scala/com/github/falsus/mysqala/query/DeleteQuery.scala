@@ -1,15 +1,17 @@
 package com.github.falsus.mysqala
 
+import connection.ConnectionManager
 import util.Using
 import condition.Condition
 import table.Table
 
 package query {
-  import java.sql.Connection
   import scala.collection.mutable.ListBuffer
 
-  class DeleteQuery(val conn: Connection) extends WhereQuery[DeleteQuery] with Using {
-    val subInstance = this
+  class DeleteQuery(val connManager: ConnectionManager) extends WhereQuery[DeleteQuery] with Using {
+    private def conn = connManager.connection
+
+    override val subInstance = this
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       rawQuery.append("DELETE FROM ")
@@ -27,19 +29,7 @@ package query {
       build(rawQuery, values)
 
       using(conn.prepareStatement(rawQuery.toString)) { stmt =>
-        var index = 1
-        for (value <- values) {
-          value match {
-            case num: Int => stmt.setInt(index, num)
-            case num: Long => stmt.setLong(index, num)
-            case text: String => stmt.setString(index, text)
-            case date: java.util.Date => stmt.setTimestamp(index, new java.sql.Timestamp(date.getTime))
-            case _ => println("atode reigai")
-          }
-
-          index += 1
-        }
-
+        setValues(stmt, values, 1)
         stmt.executeUpdate()
       }
     }

@@ -1,7 +1,7 @@
 package com.github.falsus.mysqala
 
 import table.Table
-import condition.{ Condition, SameValueCondition, LowerCondition, UpperCondition }
+import condition.{ Condition, SameValueCondition, LessThanCondition, GreaterThanCondition }
 
 package selectable {
   import java.sql.ResultSet
@@ -17,12 +17,12 @@ package selectable {
     
     def BETWEEN(value: java.util.Date) = between(value)
 
-    def >(value: java.util.Date): LowerCondition[A, java.util.Date] = {
-      new LowerCondition(this, value)
+    def >(value: java.util.Date): LessThanCondition[A, java.util.Date] = {
+      new LessThanCondition(this, value)
     }
 
-    def <(value: java.util.Date): UpperCondition[A, java.util.Date] = {
-      new UpperCondition(this, value)
+    def <(value: java.util.Date): GreaterThanCondition[A, java.util.Date] = {
+      new GreaterThanCondition(this, value)
     }
 
     override def toField(rs: ResultSet, index: Int): AnyRef = {

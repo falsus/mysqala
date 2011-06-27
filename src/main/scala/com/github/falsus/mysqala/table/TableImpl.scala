@@ -9,7 +9,7 @@ import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn
 package table {
   import java.sql.Timestamp
 
-  class TableImpl[A](val connectionManager: ConnectionManager, val tableClass: Class[A], val databaseName: String,
+  class TableImpl[A](val connManager: ConnectionManager, val tableClass: Class[A], val databaseName: String,
     val tableName: String, val shortDatabaseTableName: String, val columnMetaDatas: List[ColumnMetaData]) extends Table[A] {
     lazy val toRawQuery = tableName + " " + shortDatabaseTableName
     lazy val toRawQuerySingle = tableName
@@ -20,7 +20,7 @@ package table {
       } yield column
     }
 
-    private def conn = connectionManager.connection
+    private def conn = connManager.connection
 
     implicit def columnToOrderedColumn(col: Column[_, _]): OrderedColumn = new OrderedColumn(col, true)
 
@@ -43,15 +43,15 @@ package table {
 
     def select(columns: Selectable*) = {
       columns match {
-        case Seq(column: LastInsertId) => new SelectLastInsertIdQuery(conn, columns: _*)
-        case _ => new SelectQuery(None, conn, columns: _*)
+        case Seq(column: LastInsertId) => new SelectLastInsertIdQuery(connManager, columns: _*)
+        case _ => new SelectQuery(None, connManager, columns: _*)
       }
     }
 
     def last_insert_id() = new LastInsertId()
-    def delete = new DeleteQuery(conn)
-    def update(tables: Table[_]*) = new UpdateQuery(conn, tables: _*)
-    def insert = new PreInsertQuery[A](this, conn)
+    def delete = new DeleteQuery(connManager)
+    def update(tables: Table[_]*) = new UpdateQuery(connManager, tables: _*)
+    def insert = new PreInsertQuery[A](this, connManager)
     def * = new WildCardInTable(this)
 
     def find(cond: Condition): Option[A] = {
@@ -117,7 +117,7 @@ package table {
     }
 
     def cloneForInnerJoin: Table[A] = {
-      new TableImpl(this.connectionManager, this.tableClass, this.databaseName, this.tableName, Table.toSimpleTableName(this.tableName), columnMetaDatas)
+      new TableImpl(this.connManager, this.tableClass, this.databaseName, this.tableName, Table.toSimpleTableName(this.tableName), columnMetaDatas)
     }
 
     override def hashCode(): Int = {

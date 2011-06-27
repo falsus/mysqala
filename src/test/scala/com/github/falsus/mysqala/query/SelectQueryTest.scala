@@ -10,17 +10,16 @@ import table.{ Table, TableImpl }
 import connection.SingleConnectionManager
 import selectable.{ Column, OrderedColumn }
 import util.Using
+import query.test.model.{ User, Message }
+import query.test.table.{ UserTable, MessageTable }
 
 package query {
   @RunWith(classOf[JUnitSuiteRunner])
   class SelectQueryTest extends SpecificationWithJUnit with Using {
     table.Table.simpleTableNames.clear()
 
-    class User(val id: Int, val name: String)
-    object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
-
-    class Message(val id: Int, val userId: Int, val parentMessageId: Int, val message: String)
-    object MessageTable extends TableImpl[Message](new SingleConnectionManager(connection), classOf[Message])
+    val users = new UserTable(new SingleConnectionManager(connection))
+    val messages = new MessageTable(new SingleConnectionManager(connection))
 
     lazy val connection = {
       org.h2.Driver.load()
@@ -37,7 +36,7 @@ package query {
     }
 
     "Callable SQL like command" in {
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable
+      val q = users.SELECT(users.*) FROM users
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -48,8 +47,8 @@ package query {
     }
 
     "Callable SQL like command with WHERE" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable WHERE id == 10
+      val id = users.getIntColumn("id")
+      val q = users.SELECT(users.*) FROM users WHERE id == 10
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -61,8 +60,8 @@ package query {
     }
 
     "Callable SQL like command with ORDER BY" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable ORDER_BY (id ASC)
+      val id = users.getIntColumn("id")
+      val q = users.SELECT(users.*) FROM users ORDER_BY (id ASC)
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -73,9 +72,9 @@ package query {
     }
 
     "Callable SQL like command with ORDER BY DESC" in {
-      val id = UserTable.getIntColumn("id")
-      val name = UserTable.getStringColumn("name")
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable ORDER_BY (id DESC, name ASC)
+      val id = users.getIntColumn("id")
+      val name = users.getStringColumn("name")
+      val q = users.SELECT(users.*) FROM users ORDER_BY (id DESC, name ASC)
       val values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -86,8 +85,8 @@ package query {
     }
 
     "Callable SQL like command with LIMIT" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable LIMIT 100
+      val id = users.getIntColumn("id")
+      val q = users.SELECT(users.*) FROM users LIMIT 100
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -99,8 +98,8 @@ package query {
     }
 
     "Callable SQL like command with LIMIT OFFSET" in {
-      val id = UserTable.getIntColumn("id")
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable LIMIT 100 OFFSET 10
+      val id = users.getIntColumn("id")
+      val q = users.SELECT(users.*) FROM users LIMIT 100 OFFSET 10
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -113,13 +112,13 @@ package query {
     }
 
     "Callable SQL like command with JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.SELECT(UserTable.*, MessageTable.*, messageTableForInnerJoin.*) FROM UserTable JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
+      val q = users.SELECT(users.*, messages.*, messageTableForInnerJoin.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 
@@ -129,14 +128,14 @@ package query {
     }
 
     "Callable SQL like command with WHERE, AND, OR, ORDER BY, LIMIT, OFFSET, JOIN" in {
-      val messageTableForInnerJoin = MessageTable.cloneForInnerJoin
-      val id = UserTable.getIntColumn("id")
-      val userId = MessageTable.getIntColumn("userId")
-      val messageId = MessageTable.getIntColumn("id")
-      val message = MessageTable.getStringColumn("message")
+      val messageTableForInnerJoin = messages.cloneForInnerJoin
+      val id = users.getIntColumn("id")
+      val userId = messages.getIntColumn("userId")
+      val messageId = messages.getIntColumn("id")
+      val message = messages.getStringColumn("message")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = UserTable.SELECT(UserTable.*) FROM UserTable JOIN MessageTable ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello") ORDER_BY (id ASC) LIMIT 11 OFFSET 12
+      val q = users.SELECT(users.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello") ORDER_BY (id ASC) LIMIT 11 OFFSET 12
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
 

@@ -1,6 +1,6 @@
 package com.github.falsus.mysqala
 
-import condition.{ SameValueCondition, NotSameValueCondition, InCondition, LowerCondition, UpperCondition }
+import condition.{ SameValueCondition, NotSameValueCondition, InCondition, LessThanCondition, GreaterThanCondition }
 import table.Table
 
 package selectable {
@@ -16,17 +16,17 @@ package selectable {
     }
 
     def in(value: Int*): InCondition[A, Int] = {
-      new InCondition(this, value: _*)
+      new InCondition(this, value)
     }
 
     def IN(value: Int*) = in(value: _*)
 
-    def >(value: Int): LowerCondition[A, Int] = {
-      new LowerCondition(this, value)
+    def >(value: Int): LessThanCondition[A, Int] = {
+      new LessThanCondition(this, value)
     }
 
-    def <(value: Int): UpperCondition[A, Int] = {
-      new UpperCondition(this, value)
+    def <(value: Int): GreaterThanCondition[A, Int] = {
+      new GreaterThanCondition(this, value)
     }
 
     override def toField(rs: ResultSet, index: Int): AnyRef = {

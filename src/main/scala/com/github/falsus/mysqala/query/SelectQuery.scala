@@ -1,17 +1,23 @@
 package com.github.falsus.mysqala
 
 import selectable.{ Selectable, Column, WildCard, WildCardInTable }
+import connection.ConnectionManager
 import condition.Condition
 import table.Table
 import util.Using
 
 package query {
-  import java.sql.Connection
   import scala.collection.mutable.{ ListBuffer, LinkedHashMap }
 
-  class SelectQuery(val insertQuery: Option[InsertQuery[_]], val conn: Connection, colsArray: Selectable*) extends WhereQuery[SelectQuery] with Using {
-    val subInstance = this
-    val columns: List[Selectable] = colsArray.toList
+  class SelectQuery(val insertQuery: Option[InsertQuery[_]], val connManager: ConnectionManager, colsArray: Selectable*) extends WhereQuery[SelectQuery] with Using {
+    override val subInstance = this
+    private val columns: List[Selectable] = colsArray.toList
+
+    def freeze(): FreezedSelectQuery = {
+      null
+    }
+
+    private def conn = connManager.connection
 
     override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
       insertQuery match {
@@ -79,9 +85,56 @@ package query {
 
       var values = ListBuffer[Any]()
       val rawQuery = new StringBuilder()
-      var selectingModels = LinkedHashMap[Table[_], ListBuffer[Column[_, _]]]()
 
       build(rawQuery, values)
+
+      val foundConstructors = findConstructors()
+
+      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+        setValues(stmt, values, 1)
+
+        // TODO:extract common class
+        using(stmt.executeQuery()) { rs =>
+          while (rs.next) {
+            var params = Map[Table[_], Array[AnyRef]]()
+
+            def findTable(dbTableName: String): Table[_] = {
+              for ((table, (constructor, columns)) <- foundConstructors) {
+                if (table.tableName equalsIgnoreCase dbTableName) {
+                  return table
+                }
+              }
+
+              null
+            }
+
+            val metaData = rs.getMetaData
+            for (i <- 1 to metaData.getColumnCount) {
+              val table = findTable(metaData.getTableName(i))
+              val (constructor, columns) = foundConstructors(table)
+
+              if (!params.contains(table)) {
+                params += table -> new Array[AnyRef](columns.length)
+              }
+
+              val column = columns.find(_.databaseName equalsIgnoreCase metaData.getColumnName(i)).get
+              params(table)(columns.indexOf(column)) = column.toField(rs, i)
+            }
+
+            var models = ListBuffer[Any]()
+
+            for ((table, (constructor, columns)) <- foundConstructors) {
+              models += constructor.newInstance(params(table): _*)
+            }
+
+            f(models.toList)
+          }
+        }
+      }
+    }
+
+    def findConstructors() = {
+      var selectingModels = LinkedHashMap[Table[_], ListBuffer[Column[_, _]]]()
 
       def addSelectingColumn(table: Table[_], columns: Column[_, _]*) {
         if (!selectingModels.contains(table)) {
@@ -159,58 +212,10 @@ package query {
             foundConstructors += table -> ((table.tableClass.getConstructor(paramTypes.toArray: _*), columnsForConstructor.toList))
           }
         }
+
       }
 
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
-        var index = 1
-        for (value <- values) {
-          value match {
-            case num: Int => stmt.setInt(index, num)
-            case text: String => stmt.setString(index, text)
-            case date: java.util.Date => stmt.setTimestamp(index, new java.sql.Timestamp(date.getTime))
-            case _ => println("atode reigai")
-          }
-
-          index += 1
-        }
-
-        using(stmt.executeQuery()) { rs =>
-          while (rs.next) {
-            var params = Map[Table[_], Array[AnyRef]]()
-
-            def findTable(dbTableName: String): Table[_] = {
-              for ((table, (constructor, columns)) <- foundConstructors) {
-                if (table.tableName equalsIgnoreCase dbTableName) {
-                  return table
-                }
-              }
-
-              null
-            }
-
-            val metaData = rs.getMetaData
-            for (i <- 1 to metaData.getColumnCount) {
-              val table = findTable(metaData.getTableName(i))
-              val (constructor, columns) = foundConstructors(table)
-
-              if (!params.contains(table)) {
-                params += table -> new Array[AnyRef](columns.length)
-              }
-
-              val column = columns.find(_.databaseName equalsIgnoreCase metaData.getColumnName(i)).get
-              params(table)(columns.indexOf(column)) = column.toField(rs, i)
-            }
-
-            var models = ListBuffer[Any]()
-
-            for ((table, (constructor, columns)) <- foundConstructors) {
-              models += constructor.newInstance(params(table): _*)
-            }
-
-            f(models.toList)
-          }
-        }
-      }
+      foundConstructors
     }
   }
 }

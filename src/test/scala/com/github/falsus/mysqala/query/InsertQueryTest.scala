@@ -10,15 +10,15 @@ import table.{ Table, TableImpl }
 import connection.SingleConnectionManager
 import selectable.{ Column, OrderedColumn }
 import util.Using
+import query.test.model.{ User, Message }
+import query.test.table.{ UserTable, MessageTable }
 
 package query {
   class InsertQueryTest extends SpecificationWithJUnit with Using {
     table.Table.simpleTableNames.clear()
-    class User(val id: Int, val name: String)
-    object UserTable extends TableImpl[User](new SingleConnectionManager(connection), classOf[User])
-
-    class Message(val id: Int, val userId: Int, val parentMessageId: Int, val message: String)
-    object MessageTable extends TableImpl[Message](new SingleConnectionManager(connection), classOf[Message])
+    
+    val users = new UserTable(new SingleConnectionManager(connection))
+    val messages = new MessageTable(new SingleConnectionManager(connection))
 
     lazy val connection = {
       org.h2.Driver.load()
@@ -36,8 +36,8 @@ package query {
 
     "build" should {
       "Callable SQL like command" in {
-        val id = UserTable.getIntColumn("id")
-        val q = UserTable.INSERT INTO (id) VALUES (10)
+        val id = users.getIntColumn("id")
+        val q = users.INSERT INTO (id) VALUES (10)
         val values = ListBuffer[Any]()
         val rawQuery = new StringBuilder()
 
@@ -49,11 +49,11 @@ package query {
       }
 
       "Callable SQL like command with SELECT" in {
-        val id = UserTable.getIntColumn("id")
-        val q = UserTable.INSERT INTO (id) SELECT (id) FROM UserTable WHERE id == 20
+        val id = users.getIntColumn("id")
+        val q = users.INSERT INTO (id) SELECT (id) FROM users WHERE id == 20
         val values = ListBuffer[Any]()
         val rawQuery = new StringBuilder()
-        val tableName = UserTable.shortDatabaseTableName
+        val tableName = users.shortDatabaseTableName
 
         q.build(rawQuery, values)
 

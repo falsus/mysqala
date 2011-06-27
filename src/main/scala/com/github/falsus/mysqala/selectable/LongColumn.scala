@@ -1,7 +1,7 @@
 package com.github.falsus.mysqala
 
 import table.Table
-import condition.{ SameValueCondition, NotSameValueCondition, InCondition, LowerCondition, UpperCondition }
+import condition.{ SameValueCondition, NotSameValueCondition, InCondition, LessThanCondition, GreaterThanCondition }
 
 package selectable {
   import java.sql.ResultSet
@@ -16,17 +16,17 @@ package selectable {
     }
 
     def in(value: Long*): InCondition[A, Long] = {
-      new InCondition(this, value: _*)
+      new InCondition(this, value)
     }
 
     def IN(value: Long*) = in(value:_*)
 
-    def >(value: Long): LowerCondition[A, Long] = {
-      new LowerCondition(this, value)
+    def >(value: Long): LessThanCondition[A, Long] = {
+      new LessThanCondition(this, value)
     }
 
-    def <(value: Long): UpperCondition[A, Long] = {
-      new UpperCondition(this, value)
+    def <(value: Long): GreaterThanCondition[A, Long] = {
+      new GreaterThanCondition(this, value)
     }
 
     override def toField(rs: ResultSet, index: Int): AnyRef = {

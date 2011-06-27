@@ -6,7 +6,7 @@ import condition.SameColumnCondition
 package selectable {
   import java.sql.ResultSet
 
-  abstract class Column[A, B](val parent: Table[A], val propertyName: String, val databaseName: String, val propertyType: Class[_], val columnType: Class[_]) extends Selectable {
+  abstract class Column[A, B](val parent: Table[A], val propertyName: String, val databaseName: String, private val propertyType: Class[_], private val columnType: Class[_]) extends Selectable {
     override def toRawQuery = {
       parent.shortDatabaseTableName + "." + databaseName
     }

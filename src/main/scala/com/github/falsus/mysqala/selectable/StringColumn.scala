@@ -15,11 +15,11 @@ package selectable {
       new NotSameValueCondition(this, value)
     }
 
-    def in(value: String*): InCondition[A, String] = {
-      new InCondition(this, value: _*)
+    def in(values: String*): InCondition[A, String] = {
+      new InCondition(this, values)
     }
 
-    def IN(value: String*) = in(value: _*)
+    def IN(values: String*) = in(values: _*)
 
     override def toField(rs: ResultSet, index: Int): AnyRef = {
       if (propertyType == classOf[Option[_]]) {

@@ -8,14 +8,14 @@ package query {
   import scala.collection.mutable.ListBuffer
 
   abstract class WhereQuery[A] extends Query {
-    def subInstance: A
-    var firstWhereCondition: Condition = null
-    var orderedColumns: Seq[OrderedColumn] = null
-    var whereConditions: ListBuffer[Tuple2[Condition, Boolean]] = ListBuffer[Tuple2[Condition, Boolean]]()
-    var limitOption: Option[Int] = None
-    var offsetOption: Option[Int] = None
-    var firstFromTable: FromTable[_] = null
-    var lastJoinTable: FromTable[_] = null
+    protected def subInstance: A
+    protected var firstFromTable: FromTable[_] = null
+    private var firstWhereCondition: Condition = null
+    private var orderedColumns: Seq[OrderedColumn] = null
+    private var whereConditions: ListBuffer[Tuple2[Condition, Boolean]] = ListBuffer[Tuple2[Condition, Boolean]]()
+    private var limitOption: Option[Int] = None
+    private var offsetOption: Option[Int] = None
+    private var lastJoinTable: FromTable[_] = null
 
     class FromTable[A](val table: Table[A], var on: Option[Condition] = None) {
       var next: Option[FromTable[_]] = None

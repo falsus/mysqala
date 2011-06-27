@@ -5,7 +5,7 @@ import selectable.Column
 package condition {
   import scala.collection.mutable.ListBuffer
 
-  class InCondition[A, B](col1: Column[A, B], values: B*) extends Condition {
+  class InCondition[A, B](col1: Column[A, B], values: Seq[B]) extends Condition {
     override def toRawQueryChild(builder: StringBuilder, values: ListBuffer[Any]) {
       if (values.length == 0) {
         return
