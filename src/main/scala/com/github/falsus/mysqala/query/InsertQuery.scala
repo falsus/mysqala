@@ -77,7 +77,6 @@ package query {
       val rawQuery = new StringBuilder()
 
       build(rawQuery, values)
-
       using(conn.prepareStatement(rawQuery.toString)) { stmt =>
         setValues(stmt, values, 1)
         stmt.executeUpdate()
