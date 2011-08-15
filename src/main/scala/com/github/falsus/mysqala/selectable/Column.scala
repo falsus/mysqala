@@ -7,34 +7,17 @@ package selectable {
   import java.sql.ResultSet
 
   abstract class Column[A, B](val parent: Table[A], val propertyName: String, val databaseName: String, private val propertyType: Class[_], private val columnType: Class[_]) extends Selectable {
-    override def toRawQuery = {
-      parent.shortDatabaseTableName + "." + databaseName
-    }
-
-    def toRawQuerySingle = {
-      databaseName
-    }
-
-    def ==[C, D](value: Column[C, D]): SameColumnCondition[A, B, C, D] = {
-      new SameColumnCondition(this, value)
-    }
-
-    def asc = {
-      new OrderedColumn(this, true)
-    }
-
-    def desc = {
-      new OrderedColumn(this, false)
-    }
-
+    override def toRawQuery = parent.shortDatabaseTableName + "." + databaseName
+    def toRawQuerySingle = databaseName
+    def ==[C, D](value: Column[C, D]): SameColumnCondition[A, B, C, D] = new SameColumnCondition(this, value)
+    def asc = new OrderedColumn(this, true)
+    def desc = new OrderedColumn(this, false)
     def ASC = asc
     def DESC = desc
 
     def toField(rs: ResultSet, index: Int): AnyRef
 
-    override def hashCode() = {
-      parent.hashCode + propertyName.hashCode
-    }
+    override def hashCode() = parent.hashCode + propertyName.hashCode
 
     override def equals(obj: Any): Boolean = {
       obj match {
@@ -43,8 +26,6 @@ package selectable {
       }
     }
 
-    override def toString(): String = {
-      parent.tableName + "." + databaseName + "(" + columnType + ") " + propertyName
-    }
+    override def toString(): String = parent.tableName + "." + databaseName + "(" + columnType + ") " + propertyName
   }
 }

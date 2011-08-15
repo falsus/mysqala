@@ -19,36 +19,14 @@ package query {
 
     private def conn = connManager.connection
 
-    override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      insertQuery match {
-        case Some(insertQuery_) =>
-          insertQuery_.build(rawQuery, values)
-          rawQuery.append(" ")
-
-        case _ =>
-      }
-
-      rawQuery.append("SELECT ")
-
-      var first = true
-
-      for (column <- columns) {
-        if (first) {
-          first = false
-        } else {
-          rawQuery.append(", ")
-        }
-
-        rawQuery.append(column.toRawQuery)
-      }
-
-      rawQuery.append(" FROM ")
-      firstFromTable.toRawQuery(rawQuery, values)
-
-      buildWhere(rawQuery, values)
-      buildOrder(rawQuery, values)
-      buildLimit(rawQuery, values)
-      buildOffset(rawQuery, values)
+    override def build(values: ListBuffer[Any]): String = {
+      (insertQuery match {
+        case Some(insertQuery) => insertQuery.build(values) + " "
+        case _ => ""
+      }) + "SELECT " +
+        columns.map { col => col.toRawQuery }.mkString(", ") +
+        " FROM " + firstFromTable.toRawQuery(values) +
+        buildWhere(values) + buildOrder(values) + buildLimit(values) + buildOffset(values)
     }
 
     override def executeUpdate() = {
@@ -57,11 +35,8 @@ package query {
       }
 
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      build(rawQuery, values)
-
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+      using(conn.prepareStatement(build(values))) { stmt =>
         var index = 1
         for (value <- values) {
           value match {
@@ -84,13 +59,9 @@ package query {
       }
 
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
-
-      build(rawQuery, values)
-
       val foundConstructors = findConstructors()
 
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+      using(conn.prepareStatement(build(values))) { stmt =>
         setValues(stmt, values, 1)
 
         // TODO:extract common class

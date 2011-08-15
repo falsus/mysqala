@@ -27,21 +27,10 @@ package query {
         joinTable
       }
 
-      def toRawQuery(builder: StringBuilder, values: ListBuffer[Any]) {
-        if (on != None) {
-          builder.append(" JOIN ")
-        }
-
-        builder.append(table.toRawQuery)
-
-        on match {
-          case Some(cond) =>
-            builder.append(" ON ")
-            cond.toRawQuery(builder, values)
-          case _ =>
-        }
-
-        next match { case Some(nextFromTable) => nextFromTable.toRawQuery(builder, values) case _ => }
+      def toRawQuery(values: ListBuffer[Any]): String = {
+        (if (on != None) " JOIN " else "") + table.toRawQuery +
+          (on match { case Some(cond) => " ON " + cond.toRawQuery(values) case _ => "" }) +
+          (next match { case Some(nextFromTable) => nextFromTable.toRawQuery(values) case _ => "" })
       }
     }
 
@@ -105,67 +94,48 @@ package query {
     def LIMIT(lim: Int) = limit(lim)
     def OFFSET(off: Int) = offset(off)
 
-    def buildWhere(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      if (firstWhereCondition != null) {
-        var first = true
+    def buildWhere(values: ListBuffer[Any]): String = {
+      if (firstWhereCondition == null || !whereConditions.isEmpty) {
+        ""
+      }
 
-        for ((condition, and) <- whereConditions) {
-          if (first) {
-            rawQuery.append(" WHERE ")
-            first = false
-          } else if (and) {
-            rawQuery.append(" AND ")
-          } else {
-            rawQuery.append(" OR ")
-          }
-
-          val len = condition.length
-          if (len > 1) {
-            rawQuery.append("(")
-          }
-
-          condition.toRawQuery(rawQuery, values)
-
-          if (len > 1) {
-            rawQuery.append(")")
-          }
-        }
+      whereConditions.foldLeft("") { (prev, cur) =>
+        prev +
+          (cur match {
+            case (condition, and) =>
+              (if (prev.isEmpty) " WHERE " else if (and) { " AND " } else { " OR " }) +
+                (if (condition.hasNext) { "(" } else { "" }) +
+                condition.toRawQuery(values) +
+                (if (condition.hasNext) { ")" } else { "" })
+          })
       }
     }
 
-    def buildOrder(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      if (orderedColumns != null) {
-        var first = true
-
-        for (orderedColumn <- orderedColumns) {
-          if (first) {
-            rawQuery.append(" ORDER BY ")
-            first = false
-          } else {
-            rawQuery.append(", ")
-          }
-
-          rawQuery.append(orderedColumn.column.toRawQuery)
-
-          if (!orderedColumn.asc) {
-            rawQuery.append(" DESC")
-          }
-        }
+    def buildOrder(values: ListBuffer[Any]): String = {
+      if (orderedColumns == null) {
+        return ""
       }
+
+      " ORDER BY " +
+        orderedColumns.map { col => col.column.toRawQuery + (if (!col.asc) " DESC" else "") }.mkString(", ")
     }
 
-    def buildLimit(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      if (limitOption != None) {
-        rawQuery.append(" LIMIT ?")
-        values += limitOption.get
+    def buildLimit(values: ListBuffer[Any]): String = {
+      if (limitOption == None) {
+        return ""
       }
+
+      values += limitOption.get
+      " LIMIT ?"
     }
 
-    def buildOffset(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      if (offsetOption != None) {
-        rawQuery.append(" OFFSET ?")
-        values += offsetOption.get
+    def buildOffset(values: ListBuffer[Any]): String = {
+      if (offsetOption == None) {
+        return ""
       }
+
+      values += offsetOption.get
+      " OFFSET ?"
     }
   }
 }

@@ -35,11 +35,8 @@ package query {
     "Callable SQL like command" in {
       val q = users.SELECT(users.*) FROM users
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u" must be equalTo q.build(values)
       values.length must be equalTo 0
     }
 
@@ -47,11 +44,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.SELECT(users.*) FROM users WHERE id == 10
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u WHERE u.id = ?" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u WHERE u.id = ?" must be equalTo q.build(values)
       values.length must be equalTo 1
       values(0) must be equalTo 10
     }
@@ -60,11 +54,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.SELECT(users.*) FROM users ORDER_BY (id ASC)
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u ORDER BY u.id" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u ORDER BY u.id" must be equalTo q.build(values)
       values.length must be equalTo 0
     }
 
@@ -73,11 +64,8 @@ package query {
       val name = users.getStringColumn("name")
       val q = users.SELECT(users.*) FROM users ORDER_BY (id DESC, name ASC)
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u ORDER BY u.id DESC, u.name" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u ORDER BY u.id DESC, u.name" must be equalTo q.build(values)
       values.length must be equalTo 0
     }
 
@@ -85,11 +73,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.SELECT(users.*) FROM users LIMIT 100
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u LIMIT ?" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u LIMIT ?" must be equalTo q.build(values)
       values.length must be equalTo 1
       values(0) must be equalTo 100
     }
@@ -98,11 +83,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.SELECT(users.*) FROM users LIMIT 100 OFFSET 10
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u LIMIT ? OFFSET ?" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u LIMIT ? OFFSET ?" must be equalTo q.build(values)
       values.length must be equalTo 2
       values(0) must be equalTo 100
       values(1) must be equalTo 10
@@ -117,11 +99,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.SELECT(users.*, messages.*, messageTableForInnerJoin.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.*, m.*, " + tableName2 + ".* FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id" must be equalTo rawQuery.toString
+      "SELECT u.*, m.*, " + tableName2 + ".* FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id" must be equalTo q.build(values)
     }
 
     "Callable SQL like command with WHERE, AND, OR, ORDER BY, LIMIT, OFFSET, JOIN" in {
@@ -134,11 +113,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.SELECT(users.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello") ORDER_BY (id ASC) LIMIT 11 OFFSET 12
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "SELECT u.* FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id WHERE u.id = ? OR (m.id = ? AND m.message = ?) ORDER BY u.id LIMIT ? OFFSET ?" must be equalTo rawQuery.toString
+      "SELECT u.* FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id WHERE u.id = ? OR (m.id = ? AND m.message = ?) ORDER BY u.id LIMIT ? OFFSET ?" must be equalTo q.build(values)
       values.length must be equalTo 5
       values(0) must be equalTo 8
       values(1) must be equalTo 10

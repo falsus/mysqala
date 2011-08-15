@@ -18,7 +18,7 @@ package query {
   class DeleteQueryTest extends SpecificationWithJUnit with Using {
     table.Table.simpleTableNames.clear()
     org.h2.Driver.load()
-    
+
     val connection = java.sql.DriverManager.getConnection("jdbc:h2:mem:DeleteQueryTest;MODE=MySQL")
 
     using(connection.prepareStatement("DROP TABLE IF EXISTS users;CREATE TABLE users(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))")) { stmt =>
@@ -35,11 +35,8 @@ package query {
     "Callable SQL like command" in {
       val q = users.DELETE FROM users
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "DELETE FROM users u" must be equalTo rawQuery.toString
+      "DELETE FROM users u" must be equalTo q.build(values)
       values.length must be equalTo 0
     }
 
@@ -47,11 +44,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.DELETE FROM users WHERE id == 10
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "DELETE FROM users u WHERE u.id = ?" must be equalTo rawQuery.toString
+      "DELETE FROM users u WHERE u.id = ?" must be equalTo q.build(values)
       values.length must be equalTo 1
       values(0) must be equalTo 10
     }
@@ -65,11 +59,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.DELETE FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "DELETE FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id" must be equalTo rawQuery.toString
+      "DELETE FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id" must be equalTo q.build(values)
     }
 
     "Callable SQL like command with WHERE, AND, OR, JOIN" in {
@@ -82,11 +73,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.DELETE FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello")
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "DELETE FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id WHERE u.id = ? OR (m.id = ? AND m.message = ?)" must be equalTo rawQuery.toString
+      "DELETE FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id WHERE u.id = ? OR (m.id = ? AND m.message = ?)" must be equalTo q.build(values)
       values.length must be equalTo 3
       values(0) must be equalTo 8
       values(1) must be equalTo 10

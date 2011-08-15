@@ -10,8 +10,7 @@ package query {
 
   class UpdateQuery(val connManager: ConnectionManager, tables_ : Table[_]*) extends WhereQuery[UpdateQuery] with Using {
     private def conn = connManager.connection
-
-    val tables = tables_.init
+    private val tables = tables_.init
     val subInstance = this
     var setters: Seq[SameValueCondition[_, _]] = null
 
@@ -24,42 +23,18 @@ package query {
 
     def SET(sets: SameValueCondition[_, _]*) = set(sets: _*)
 
-    override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      rawQuery.append("UPDATE ")
-
-      for (table <- tables) {
-        rawQuery.append(table.toRawQuery)
-        rawQuery.append(", ")
-      }
-
-      firstFromTable.toRawQuery(rawQuery, values)
-
-      rawQuery.append(" SET ")
-
-      var first = true
-
-      for (setter <- setters) {
-        if (first) {
-          first = false
-        } else {
-          rawQuery.append(", ")
-        }
-
-        setter.toRawQuery(rawQuery, values)
-      }
-
-      buildWhere(rawQuery, values)
-      buildOrder(rawQuery, values)
-      buildLimit(rawQuery, values)
+    override def build(values: ListBuffer[Any]): String = {
+      "UPDATE " + tables.mkString(", ") + (if (tables.isEmpty) "" else ", ") + firstFromTable.toRawQuery(values) + " SET " +
+        setters.map { setter => setter.toRawQuery(values) }.mkString(", ") +
+        buildWhere(values) +
+        buildOrder(values) +
+        buildLimit(values)
     }
 
     override def executeUpdate(): Int = {
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      build(rawQuery, values)
-
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+      using(conn.prepareStatement(build(values))) { stmt =>
         setValues(stmt, values, 1)
         stmt.executeUpdate()
       }

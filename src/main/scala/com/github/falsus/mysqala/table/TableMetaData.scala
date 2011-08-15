@@ -15,11 +15,7 @@ package table {
     lazy val databaseName = {
       using(conn.prepareStatement("SELECT DATABASE()")) { stmt =>
         using(stmt.executeQuery()) { rs =>
-          if (rs.next) {
-            rs.getString(1)
-          } else {
-            null
-          }
+          if (rs.next) rs.getString(1) else null
         }
       }
     }

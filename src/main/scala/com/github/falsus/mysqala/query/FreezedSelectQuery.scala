@@ -45,19 +45,18 @@ package query {
       currentIndex
     }
 
-    def execute(dynamicValues: Any*)(f: (List[_]) => Unit) = {
-      val rawQuery = new StringBuilder()
+    def execute(dynamicValues: Any*)(f: (Iterable[_]) => Unit) = {
       val values = mergeValues(dynamicValues)
       val valuesTmp = values.clone
 
-      for (queryString <- queryStrings) {
+      val query = queryStrings.map { queryString =>
         queryString match {
-          case d: DynamicQueryString => d.build(rawQuery, valuesTmp)
-          case f: FixedQueryString => rawQuery.append(f.rawString)
+          case d: DynamicQueryString => d.build(valuesTmp)
+          case f: FixedQueryString => f.rawString
         }
-      }
+      }.mkString
 
-      using(connManager.connection.prepareStatement(rawQuery.toString)) { stmt =>
+      using(connManager.connection.prepareStatement(query)) { stmt =>
         setValues(stmt, values, 1)
 
         // TODO:extract common class
@@ -66,13 +65,12 @@ package query {
             var params = Map[Table[_], Array[AnyRef]]()
 
             def findTable(dbTableName: String): Table[_] = {
-              for ((table, (constructor, columns)) <- foundConstructors) {
-                if (table.tableName equalsIgnoreCase dbTableName) {
-                  return table
-                }
+              foundConstructors.find {
+                case (table, (constructor, columns)) => table.tableName equalsIgnoreCase dbTableName
+              } match {
+                case Some((table, (constructor, columns))) => table
+                case None => null
               }
-
-              null
             }
 
             val metaData = rs.getMetaData
@@ -88,13 +86,12 @@ package query {
               params(table)(columns.indexOf(column)) = column.toField(rs, i)
             }
 
-            var models = ListBuffer[Any]()
+            var models = for {
+              (table, (constructor, columns)) <- foundConstructors
+              model = constructor.newInstance(params(table): _*)
+            } yield model
 
-            for ((table, (constructor, columns)) <- foundConstructors) {
-              models += constructor.newInstance(params(table): _*)
-            }
-
-            f(models.toList)
+            f(models)
           }
         }
       }

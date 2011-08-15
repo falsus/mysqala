@@ -8,7 +8,7 @@ package query {
 
   trait Query {
     def executeUpdate(): Int = 0
-    def build(rawQuery: StringBuilder, values: ListBuffer[Any]): Unit
+    def build(values: ListBuffer[Any]): String
 
     def setValues(stmt: java.sql.PreparedStatement, values: Seq[_], index: Int): Int = {
       var currentIndex = index

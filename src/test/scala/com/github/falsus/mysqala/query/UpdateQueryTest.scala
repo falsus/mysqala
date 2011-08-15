@@ -36,11 +36,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.UPDATE(users) SET id == 10
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "UPDATE users u SET u.id = ?" must be equalTo rawQuery.toString
+      "UPDATE users u SET u.id = ?" must be equalTo q.build(values).toString
       values.length must be equalTo 1
       values(0) must be equalTo 10
     }
@@ -49,11 +46,8 @@ package query {
       val id = users.getIntColumn("id")
       val q = users.UPDATE(users) SET id == 20 WHERE id == 10
       val values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "UPDATE users u SET u.id = ? WHERE u.id = ?" must be equalTo rawQuery.toString
+      "UPDATE users u SET u.id = ? WHERE u.id = ?" must be equalTo q.build(values).toString
       values.length must be equalTo 2
       values(0) must be equalTo 20
       values(1) must be equalTo 10
@@ -68,11 +62,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.UPDATE(users) JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET id == 10
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "UPDATE users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id SET u.id = ?" must be equalTo rawQuery.toString
+      "UPDATE users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id SET u.id = ?" must be equalTo q.build(values)
       values.length must be equalTo 1
       values(0) must be equalTo 10
     }
@@ -87,11 +78,8 @@ package query {
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
       val q = users.UPDATE(users) JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId SET (id == 10) WHERE id == 8 OR (messageId == 10 AND message == "hello")
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      q.build(rawQuery, values)
-
-      "UPDATE users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id SET u.id = ? WHERE u.id = ? OR (m.id = ? AND m.message = ?)" must be equalTo rawQuery.toString
+      "UPDATE users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id SET u.id = ? WHERE u.id = ? OR (m.id = ? AND m.message = ?)" must be equalTo q.build(values)
       values.length must be equalTo 4
       values(0) must be equalTo 10
       values(1) must be equalTo 8

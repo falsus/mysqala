@@ -19,7 +19,7 @@ package query {
     org.h2.Driver.load()
 
     val connection = java.sql.DriverManager.getConnection("jdbc:h2:mem:InsertQueryTest;MODE=MySQL")
-    
+
     using(connection.prepareStatement("DROP TABLE IF EXISTS users;CREATE TABLE users(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))")) { stmt =>
       stmt.executeUpdate()
     }
@@ -36,11 +36,8 @@ package query {
         val id = users.getIntColumn("id")
         val q = users.INSERT INTO (id) VALUES (10)
         val values = ListBuffer[Any]()
-        val rawQuery = new StringBuilder()
 
-        q.build(rawQuery, values)
-
-        "INSERT INTO users(id) VALUES(?)" must be equalTo rawQuery.toString
+        "INSERT INTO users(id) VALUES(?)" must be equalTo q.build(values)
         values.length must be equalTo 1
         values(0) must be equalTo 10
       }
@@ -49,12 +46,9 @@ package query {
         val id = users.getIntColumn("id")
         val q = users.INSERT INTO (id) SELECT (id) FROM users WHERE id == 20
         val values = ListBuffer[Any]()
-        val rawQuery = new StringBuilder()
         val tableName = users.shortDatabaseTableName
 
-        q.build(rawQuery, values)
-
-        "INSERT INTO users(id) SELECT " + tableName + ".id FROM users " + tableName + " WHERE " + tableName + ".id = ?" must be equalTo rawQuery.toString
+        "INSERT INTO users(id) SELECT " + tableName + ".id FROM users " + tableName + " WHERE " + tableName + ".id = ?" must be equalTo q.build(values)
         values.length must be equalTo 1
         values(0) must be equalTo 20
       }

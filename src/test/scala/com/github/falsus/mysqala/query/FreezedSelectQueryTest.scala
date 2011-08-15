@@ -61,7 +61,7 @@ package query {
 
         freezedQ.execute() {
           (models =>
-            models(0) match {
+            models.head match {
               case u: User => foundModels.append(u)
             })
         }
@@ -83,7 +83,7 @@ package query {
 
         freezedQ.execute("hello2") {
           (models =>
-            models(0) match {
+            models.head match {
               case u: User => foundModels.append(u)
             })
         }
@@ -107,7 +107,7 @@ package query {
 
           freezedQ.execute(List("hello2")) {
             (models =>
-              models(0) match {
+              models.head match {
                 case u: User => foundModels.append(u)
               })
           }
@@ -121,7 +121,7 @@ package query {
 
           freezedQ.execute(List("hello1", "hello2")) {
             (models =>
-              models(0) match {
+              models.head match {
                 case u: User => foundModels.append(u)
               })
           }

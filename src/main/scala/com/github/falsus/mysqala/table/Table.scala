@@ -41,9 +41,7 @@ package table {
 
     def cloneForInnerJoin: Table[A]
 
-    override def hashCode(): Int = {
-      tableName.hashCode
-    }
+    override def hashCode(): Int = tableName.hashCode
 
     override def equals(obj: Any): Boolean = {
       obj match {

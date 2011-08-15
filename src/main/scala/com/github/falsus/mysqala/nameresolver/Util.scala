@@ -2,25 +2,21 @@ package com.github.falsus.mysqala.nameresolver
 
 object Util {
   def camelToUnderScore(name: String) = {
-    val buf = new StringBuilder()
     var prevUpperCase = true
 
-    for (c <- name) {
+    name.map { c =>
       if (c.isUpper) {
-        if (!prevUpperCase) {
-          buf.append("_")
-
-        }
-
-        buf.append(c.toLowerCase)
-        prevUpperCase = true
+        (if (!prevUpperCase) {
+          prevUpperCase = true
+          "_"
+        } else {
+          ""
+        }) + c.toLowerCase
       } else {
         prevUpperCase = false
-        buf.append(c)
+        c
       }
-    }
-
-    buf.toString
+    }.mkString
   }
 
   def toPluralForm(name: String) = {

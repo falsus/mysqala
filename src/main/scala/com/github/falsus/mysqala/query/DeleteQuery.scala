@@ -13,22 +13,18 @@ package query {
 
     override val subInstance = this
 
-    override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      rawQuery.append("DELETE FROM ")
-      firstFromTable.toRawQuery(rawQuery, values)
-
-      buildWhere(rawQuery, values)
-      buildOrder(rawQuery, values)
-      buildLimit(rawQuery, values)
+    override def build(values: ListBuffer[Any]): String = {
+      "DELETE FROM " +
+        firstFromTable.toRawQuery(values) +
+        buildWhere(values) +
+        buildOrder(values) +
+        buildLimit(values)
     }
 
     override def executeUpdate() = {
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      build(rawQuery, values)
-
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+      using(conn.prepareStatement(build(values))) { stmt =>
         setValues(stmt, values, 1)
         stmt.executeUpdate()
       }

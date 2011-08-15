@@ -12,72 +12,31 @@ package query {
     private var valueses = ListBuffer[List[Any]]()
     private def conn = connManager.connection
 
-    def addValues(values: List[Any]) = {
-      valueses += values
-    }
-
-    def select(columns: Selectable*) = {
-      new SelectQuery(Some(this), connManager, columns: _*)
-    }
-
+    def addValues(values: List[Any]) = valueses += values
+    def select(columns: Selectable*) = new SelectQuery(Some(this), connManager, columns: _*)
     def SELECT(columns: Selectable*) = select(columns: _*)
 
-    override def build(rawQuery: StringBuilder, values: ListBuffer[Any]) = {
-      rawQuery.append("INSERT INTO ")
-      rawQuery.append(table.toRawQuerySingle)
-      rawQuery.append("(")
-
-      var first = true
-
-      for (column <- columns) {
-        if (first) {
-          first = false
+    override def build(values: ListBuffer[Any]): String = {
+      "INSERT INTO " + table.toRawQuerySingle + "(" +
+        columns.map { col => col.toRawQuerySingle }.mkString(", ") + ")" +
+        (if (valueses.isEmpty) {
+          ""
         } else {
-          rawQuery.append(",")
-        }
-
-        rawQuery.append(column.toRawQuerySingle)
-      }
-
-      rawQuery.append(")")
-      if (valueses.length > 0) {
-        rawQuery.append(" VALUES")
-
-        first = true
-
-        for (vs <- valueses) {
-          if (first) {
-            first = false
-          } else {
-            rawQuery.append(", ")
-          }
-
-          rawQuery.append("(")
-
-          var first2 = true
-
-          for (v <- vs) {
-            if (first2) {
-              first2 = false
-            } else {
-              rawQuery.append(", ")
-            }
-
-            rawQuery.append("?")
-            values += v
-          }
-
-          rawQuery.append(")")
-        }
-      }
+          " VALUES" +
+            valueses.map { vs =>
+              "(" + vs.map {
+                v =>
+                  values += v
+                  "?"
+              }.mkString(", ") + ")"
+            }.mkString(", ")
+        })
     }
 
     override def executeUpdate(): Int = {
       var values = ListBuffer[Any]()
-      val rawQuery = new StringBuilder()
 
-      build(rawQuery, values)
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
+      using(conn.prepareStatement(build(values))) { stmt =>
         setValues(stmt, values, 1)
         stmt.executeUpdate()
       }

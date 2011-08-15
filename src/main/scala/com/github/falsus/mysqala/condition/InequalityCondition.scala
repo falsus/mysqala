@@ -6,17 +6,9 @@ package condition {
   import scala.collection.mutable.ListBuffer
 
   class InequalityCondition[A, B](greater: Boolean, col: Column[A, B], value: B) extends Condition {
-    override def toRawQueryChild(builder: StringBuilder, values: ListBuffer[Any]) {
-      builder.append(col.toRawQuery)
-      builder.append(" ")
-
-      if (greater) {
-        builder.append(">")
-      } else {
-        builder.append("<")
-      }
-      builder.append(" ?")
+    override def toRawQueryChild(values: ListBuffer[Any]): String = {
       values += value
+      col.toRawQuery + " " + (if (greater) ">" else "<") + " ?"
     }
   }
 

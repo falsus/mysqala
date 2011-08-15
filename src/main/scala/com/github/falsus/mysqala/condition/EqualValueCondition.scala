@@ -6,24 +6,14 @@ package condition {
   import scala.collection.mutable.ListBuffer
 
   class EqualValueCondition[A, B](equal: Boolean, val col: Column[A, B], val value: B) extends Condition {
-    override def toRawQueryChild(builder: StringBuilder, values: ListBuffer[Any]) {
-      builder.append(col.toRawQuery)
-
-      if (value != null) {
-        if (equal) {
-          builder.append(" = ?")
+    override def toRawQueryChild(values: ListBuffer[Any]): String = {
+      col.toRawQuery +
+        (if (value != null) {
+          values += value
+          if (equal) " = ?" else " != ?"
         } else {
-          builder.append(" != ?")
-        }
-
-        values += value
-      } else {
-        if (equal) {
-          builder.append(" IS NULL")
-        } else {
-          builder.append(" IS NOT NULL")
-        }
-      }
+          if (equal) " IS NULL" else " IS NOT NULL"
+        })
     }
   }
 

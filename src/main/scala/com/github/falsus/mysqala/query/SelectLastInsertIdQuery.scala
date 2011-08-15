@@ -8,19 +8,14 @@ package query {
   import scala.collection.mutable.ListBuffer
 
   class SelectLastInsertIdQuery(connManager: ConnectionManager, colsArray: Selectable*) extends SelectQuery(None, connManager, colsArray: _*) with Using {
-    override def build(rawQuery: StringBuilder, values: ListBuffer[Any]): Unit = {
-      rawQuery.append("SELECT LAST_INSERT_ID()")
-    }
-    
+    private lazy val staticQuery = "SELECT LAST_INSERT_ID()"
     private def conn = connManager.connection
 
-    def get: Int = {
-      var rawQuery = new StringBuilder()
+    override def build(values: ListBuffer[Any]): String = staticQuery
 
-      using(conn.prepareStatement(rawQuery.toString)) { stmt =>
-        using(stmt.executeQuery()) { rs =>
-          return rs.getInt(1)
-        }
+    def get: Int = {
+      using(conn.prepareStatement(staticQuery)) { stmt =>
+        using(stmt.executeQuery()) { rs => return rs.getInt(1) }
       }
     }
   }

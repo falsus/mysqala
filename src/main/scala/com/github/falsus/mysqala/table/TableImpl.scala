@@ -73,47 +73,43 @@ package table {
     }
 
     def getIntColumn(propertyName: String): IntColumn[A] = {
-      for {
-        column <- columns
-        if (column.propertyName == propertyName)
-      } {
-        return column match { case numberColumn: IntColumn[A] => numberColumn case _ => throw new ColumnTypeException() }
+      columns.find { column => column.propertyName == propertyName } match {
+        case Some(col) => col match {
+          case numberColumn: IntColumn[A] => numberColumn
+          case _ => throw new ColumnTypeException()
+        }
+        case None => throw new ColumnNotExistException()
       }
-
-      throw new ColumnNotExistException()
     }
 
     def getLongColumn(propertyName: String): LongColumn[A] = {
-      for {
-        column <- columns
-        if (column.propertyName == propertyName)
-      } {
-        return column match { case numberColumn: LongColumn[A] => numberColumn case _ => throw new ColumnTypeException() }
+      columns.find { column => column.propertyName == propertyName } match {
+        case Some(col) => col match {
+          case numberColumn: LongColumn[A] => numberColumn
+          case _ => throw new ColumnTypeException()
+        }
+        case None => throw new ColumnNotExistException()
       }
-
-      throw new ColumnNotExistException()
     }
 
     def getStringColumn(propertyName: String): StringColumn[A] = {
-      for {
-        column <- columns
-        if (column.propertyName == propertyName)
-      } {
-        return column match { case stringColumn: StringColumn[A] => stringColumn case _ => throw new ColumnTypeException() }
+      columns.find { column => column.propertyName == propertyName } match {
+        case Some(col) => col match {
+          case stringColumn: StringColumn[A] => stringColumn
+          case _ => throw new ColumnTypeException()
+        }
+        case None => throw new ColumnNotExistException()
       }
-
-      throw new ColumnNotExistException()
     }
 
     def getDateColumn(propertyName: String): DateColumn[A] = {
-      for {
-        column <- columns
-        if (column.propertyName == propertyName)
-      } {
-        return column match { case dateColumn: DateColumn[A] => dateColumn case _ => throw new ColumnTypeException() }
+      columns.find { column => column.propertyName == propertyName } match {
+        case Some(col) => col match {
+          case dateColumn: DateColumn[A] => dateColumn
+          case _ => throw new ColumnTypeException()
+        }
+        case None => throw new ColumnNotExistException()
       }
-
-      throw new ColumnNotExistException()
     }
 
     def cloneForInnerJoin: Table[A] = {

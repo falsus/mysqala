@@ -11,19 +11,9 @@ package condition {
 
     columns += col -> true
 
-    def asc = {
-      columns(lastColumn) = true
-    }
-
-    def desc = {
-      columns(lastColumn) = false
-    }
-
-    def +=(column: Column[_, _]) = {
-      columns += column -> true
-    }
-
-    override def toRawQueryChild(builder: StringBuilder, values: ListBuffer[Any]) {
-    }
+    def asc = columns(lastColumn) = true
+    def desc = columns(lastColumn) = false
+    def +=(column: Column[_, _]) = columns += column -> true
+    override def toRawQueryChild(values: ListBuffer[Any]) = ""
   }
 }
