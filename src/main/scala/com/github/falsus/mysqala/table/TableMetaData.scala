@@ -1,12 +1,13 @@
 package com.github.falsus.mysqala
 
-import util.Using
-import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn, StringColumn, LongColumn, DateColumn }
-import nameresolver.{ NameResolver, DefaultNameResolver }
+import com.github.falsus.mysqala.nameresolver.{DefaultNameResolver, NameResolver}
+import com.github.falsus.mysqala.util.Using
 
 package table {
-  import java.sql.Connection
+
   import java.lang.reflect.Field
+  import java.sql.Connection
+
   import scala.collection.mutable.ListBuffer
 
   class TableMetaData[A](val conn: Connection, val tableClass: Class[A], val nameResolver: NameResolver) extends Using {
@@ -39,7 +40,9 @@ package table {
 
       for (field <- tableClass.getDeclaredFields) {
         nameResolver.resolveField(tableClass, field) match {
-          case Some(name) => if (columnTypes.contains(name)) { colsBuf += getColumnMetaData(field, name, columnTypes(name)) }
+          case Some(name) => if (columnTypes.contains(name)) {
+            colsBuf += getColumnMetaData(field, name, columnTypes(name))
+          }
           case None =>
         }
       }
@@ -57,4 +60,5 @@ package table {
       }
     }
   }
+
 }

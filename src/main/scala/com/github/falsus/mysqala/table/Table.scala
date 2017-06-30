@@ -1,42 +1,58 @@
 package com.github.falsus.mysqala
 
-import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn, StringColumn, LongColumn, DateColumn }
-import util.Using
-import nameresolver.{ NameResolver, DefaultNameResolver }
-import query.{ SelectQuery, PreInsertQuery, DeleteQuery, UpdateQuery, SelectLastInsertIdQuery }
-import condition.{ Condition, PlaceHolder }
+import com.github.falsus.mysqala.condition.{Condition, PlaceHolder}
+import com.github.falsus.mysqala.query.{DeleteQuery, PreInsertQuery, SelectQuery, UpdateQuery}
+import com.github.falsus.mysqala.selectable._
 
 package table {
-  import java.sql.{ ResultSet }
-  import java.lang.reflect.Field
-  import scala.collection.mutable.{ LinkedHashMap, ListBuffer }
+
+  import scala.collection.mutable.LinkedHashMap
 
   trait Table[A] {
     def shortDatabaseTableName: String
+
     def toRawQuery: String
+
     def toRawQuerySingle: String
+
     def tableName: String
+
     def tableClass: Class[A]
+
     def columns: List[Column[A, _]]
 
     def select(columns: Selectable*): SelectQuery
+
     def last_insert_id(): LastInsertId
+
     def delete: DeleteQuery
+
     def update(tables: Table[_]*): UpdateQuery
+
     def insert: PreInsertQuery[A]
+
     def SELECT(columns: Selectable*) = select(columns: _*)
+
     def LAST_INSERT_ID() = last_insert_id
+
     def DELETE = delete
+
     def UPDATE(tables: Table[_]*) = update(tables: _*)
+
     def INSERT = insert
+
     def * : WildCardInTable
+
     def ? = new PlaceHolder()
 
     def find(cond: Condition): Option[A]
 
     def getIntColumn(propertyName: String): IntColumn[A]
+
     def getLongColumn(propertyName: String): LongColumn[A]
+
     def getStringColumn(propertyName: String): StringColumn[A]
+
     def getDateColumn(propertyName: String): DateColumn[A]
 
     def cloneForInnerJoin: Table[A]
@@ -68,4 +84,5 @@ package table {
       name
     }
   }
+
 }

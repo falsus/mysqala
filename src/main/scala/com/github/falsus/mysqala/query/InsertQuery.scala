@@ -1,19 +1,23 @@
 package com.github.falsus.mysqala
 
-import selectable.{ Selectable, Column }
-import table.Table
-import util.Using
-import connection.ConnectionManager
+import com.github.falsus.mysqala.connection.ConnectionManager
+import com.github.falsus.mysqala.selectable.{Column, Selectable}
+import com.github.falsus.mysqala.table.Table
+import com.github.falsus.mysqala.util.Using
 
 package query {
+
   import scala.collection.mutable.ListBuffer
 
   abstract class InsertQuery[A](val connManager: ConnectionManager, val table: Table[A], val columns: Column[A, _]*) extends Query with Using {
     private var valueses = ListBuffer[List[Any]]()
+
     private def conn = connManager.connection
 
     def addValues(values: List[Any]) = valueses += values
+
     def select(columns: Selectable*) = new SelectQuery(Some(this), connManager, columns: _*)
+
     def SELECT(columns: Selectable*) = select(columns: _*)
 
     override def build(values: ListBuffer[Any]): String = {
@@ -114,4 +118,5 @@ package query {
 
     def VALUES(value1: B, value2: C, value3: D, value4: E, value5: F, value6: G, value7: H, value8: I) = values(value1, value2, value3, value4, value5, value6, value7, value8)
   }
+
 }

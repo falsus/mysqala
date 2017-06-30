@@ -1,8 +1,9 @@
 package com.github.falsus.mysqala
 
-import selectable.Column
+import com.github.falsus.mysqala.selectable.Column
 
 package querystring {
+
   import scala.collection.mutable.ListBuffer
 
   class InQueryString(column: Column[_, _]) extends DynamicQueryString {
@@ -16,4 +17,5 @@ package querystring {
         })
     }
   }
+
 }

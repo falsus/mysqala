@@ -1,8 +1,9 @@
 package com.github.falsus.mysqala
 
-import selectable.Column
+import com.github.falsus.mysqala.selectable.Column
 
 package condition {
+
   import scala.collection.mutable.ListBuffer
 
   class InequalityCondition[A, B](greater: Boolean, col: Column[A, B], value: B) extends Condition {
@@ -13,5 +14,7 @@ package condition {
   }
 
   class LessThanCondition[A, B](col: Column[A, B], value: B) extends InequalityCondition(false, col, value)
+
   class GreaterThanCondition[A, B](col: Column[A, B], value: B) extends InequalityCondition(true, col, value)
+
 }

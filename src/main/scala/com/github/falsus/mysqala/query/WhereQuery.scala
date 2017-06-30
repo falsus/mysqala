@@ -1,18 +1,20 @@
 package com.github.falsus.mysqala
 
-import condition.Condition
-import table.Table
-import selectable.{ Selectable, Column, OrderedColumn }
+import com.github.falsus.mysqala.condition.Condition
+import com.github.falsus.mysqala.selectable.OrderedColumn
+import com.github.falsus.mysqala.table.Table
 
 package query {
+
   import scala.collection.mutable.ListBuffer
 
   abstract class WhereQuery[A] extends Query {
     protected def subInstance: A
+
     protected var firstFromTable: FromTable[_] = null
     private var firstWhereCondition: Condition = null
     private var orderedColumns: Seq[OrderedColumn] = null
-    private var whereConditions: ListBuffer[Tuple2[Condition, Boolean]] = ListBuffer[Tuple2[Condition, Boolean]]()
+    private var whereConditions: ListBuffer[(Condition, Boolean)] = ListBuffer[(Condition, Boolean)]()
     private var limitOption: Option[Int] = None
     private var offsetOption: Option[Int] = None
     private var lastJoinTable: FromTable[_] = null
@@ -29,16 +31,27 @@ package query {
 
       def toRawQuery(values: ListBuffer[Any]): String = {
         (if (on != None) " JOIN " else "") + table.toRawQuery +
-          (on match { case Some(cond) => " ON " + cond.toRawQuery(values) case _ => "" }) +
-          (next match { case Some(nextFromTable) => nextFromTable.toRawQuery(values) case _ => "" })
+          (on match {
+            case Some(cond) => " ON " + cond.toRawQuery(values)
+            case _ => ""
+          }) +
+          (next match {
+            case Some(nextFromTable) => nextFromTable.toRawQuery(values)
+            case _ => ""
+          })
       }
     }
 
     def FROM[A](table: Table[A]) = from(table)
+
     def JOIN[A](table: Table[A]) = join(table)
+
     def ON(on_ : Condition) = on(on_)
+
     def WHERE(cond: Condition) = where(cond)
+
     def OR(cond: Condition) = or(cond)
+
     def AND(cond: Condition) = and(cond)
 
     def from[A](table: Table[A]) = {
@@ -91,7 +104,9 @@ package query {
     }
 
     def ORDER_BY(columns: OrderedColumn*) = order_by(columns: _*)
+
     def LIMIT(lim: Int) = limit(lim)
+
     def OFFSET(off: Int) = offset(off)
 
     def buildWhere(values: ListBuffer[Any]): String = {
@@ -103,10 +118,22 @@ package query {
         prev +
           (cur match {
             case (condition, and) =>
-              (if (prev.isEmpty) " WHERE " else if (and) { " AND " } else { " OR " }) +
-                (if (condition.hasNext) { "(" } else { "" }) +
+              (if (prev.isEmpty) " WHERE " else if (and) {
+                " AND "
+              } else {
+                " OR "
+              }) +
+                (if (condition.hasNext) {
+                  "("
+                } else {
+                  ""
+                }) +
                 condition.toRawQuery(values) +
-                (if (condition.hasNext) { ")" } else { "" })
+                (if (condition.hasNext) {
+                  ")"
+                } else {
+                  ""
+                })
           })
       }
     }
@@ -138,4 +165,5 @@ package query {
       " OFFSET ?"
     }
   }
+
 }

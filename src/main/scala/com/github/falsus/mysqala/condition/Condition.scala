@@ -1,10 +1,10 @@
 package com.github.falsus.mysqala.condition
 
-import scala.collection.mutable.{ ListBuffer, LinkedHashMap }
+import scala.collection.mutable.ListBuffer
 
 abstract class Condition {
   var isAnd: Boolean = false
-  var nextCond: Condition = null
+  var nextCond: Condition = _
 
   def toRawQueryChild(values: ListBuffer[Any]): String
 
@@ -16,22 +16,25 @@ abstract class Condition {
     toRawQueryChild(values) + (if (isAnd) " AND " else " OR ") + nextCond.toRawQuery(values)
   }
 
-  def hasNext = nextCond != null
-  def length = count(1)
+  def hasNext: Boolean = nextCond != null
+
+  def length: Int = count(1)
+
   def count(total: Int): Int = if (nextCond == null) total else nextCond.count(total + 1)
 
-  def and(cond: Condition) = {
+  def and(cond: Condition): Condition = {
     nextCond = cond
     isAnd = true
     this
   }
 
-  def or(cond: Condition) = {
+  def or(cond: Condition): Condition = {
     nextCond = cond
     isAnd = false
     this
   }
 
-  def AND(cond: Condition) = and(cond)
-  def OR(cond: Condition) = or(cond)
+  def AND(cond: Condition): Condition = and(cond)
+
+  def OR(cond: Condition): Condition = or(cond)
 }

@@ -1,16 +1,17 @@
 package com.github.falsus.mysqala
 
-import connection.ConnectionManager
-import nameresolver.{ NameResolver, DefaultNameResolver }
-import query.{ SelectQuery, PreInsertQuery, DeleteQuery, UpdateQuery, SelectLastInsertIdQuery }
-import condition.Condition
-import selectable.{ Selectable, Column, WildCardInTable, LastInsertId, IntColumn, StringColumn, LongColumn, DateColumn, OrderedColumn }
+import com.github.falsus.mysqala.condition.Condition
+import com.github.falsus.mysqala.connection.ConnectionManager
+import com.github.falsus.mysqala.nameresolver.{DefaultNameResolver, NameResolver}
+import com.github.falsus.mysqala.query._
+import com.github.falsus.mysqala.selectable._
 
 package table {
+
   import java.sql.Timestamp
 
   class TableImpl[A](val connManager: ConnectionManager, val tableClass: Class[A], val databaseName: String,
-    val tableName: String, val shortDatabaseTableName: String, val columnMetaDatas: List[ColumnMetaData]) extends Table[A] {
+                     val tableName: String, val shortDatabaseTableName: String, val columnMetaDatas: List[ColumnMetaData]) extends Table[A] {
     lazy val toRawQuery = tableName + " " + shortDatabaseTableName
     lazy val toRawQuerySingle = tableName
     lazy val columns = {
@@ -49,24 +50,27 @@ package table {
     }
 
     def last_insert_id() = new LastInsertId()
+
     def delete = new DeleteQuery(connManager)
+
     def update(tables: Table[_]*) = new UpdateQuery(connManager, tables: _*)
+
     def insert = new PreInsertQuery[A](this, connManager)
+
     def * = new WildCardInTable(this)
 
     def find(cond: Condition): Option[A] = {
       val query = select(columns: _*) from this where cond
       var foundModel: Option[A] = None
 
-      query.execute { (models) =>
-        {
-          for (model <- models) {
-            model match {
-              case model: A => foundModel = Some(model)
-              case _ =>
-            }
+      query.execute { (models) => {
+        for (model <- models) {
+          model match {
+            case model: A => foundModel = Some(model)
+            case _ =>
           }
         }
+      }
       }
 
       foundModel
@@ -129,5 +133,7 @@ package table {
   }
 
   class ColumnNotExistException extends Exception
+
   class ColumnTypeException extends Exception
+
 }

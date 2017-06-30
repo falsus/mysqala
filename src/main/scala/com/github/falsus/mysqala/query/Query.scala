@@ -1,13 +1,12 @@
 package com.github.falsus.mysqala
 
-import condition.Condition
-import selectable.{ Selectable, Column, OrderedColumn }
-
 package query {
+
   import scala.collection.mutable.ListBuffer
 
   trait Query {
     def executeUpdate(): Int = 0
+
     def build(values: ListBuffer[Any]): String
 
     def setValues(stmt: java.sql.PreparedStatement, values: Seq[_], index: Int): Int = {
@@ -28,4 +27,5 @@ package query {
       currentIndex
     }
   }
+
 }

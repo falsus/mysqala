@@ -1,18 +1,25 @@
 package com.github.falsus.mysqala
 
-import table.Table
-import condition.SameColumnCondition
+import com.github.falsus.mysqala.condition.SameColumnCondition
+import com.github.falsus.mysqala.table.Table
 
 package selectable {
+
   import java.sql.ResultSet
 
   abstract class Column[A, B](val parent: Table[A], val propertyName: String, val databaseName: String, private val propertyType: Class[_], private val columnType: Class[_]) extends Selectable {
     override def toRawQuery = parent.shortDatabaseTableName + "." + databaseName
+
     def toRawQuerySingle = databaseName
+
     def ==[C, D](value: Column[C, D]): SameColumnCondition[A, B, C, D] = new SameColumnCondition(this, value)
+
     def asc = new OrderedColumn(this, true)
+
     def desc = new OrderedColumn(this, false)
+
     def ASC = asc
+
     def DESC = desc
 
     def toField(rs: ResultSet, index: Int): AnyRef
@@ -28,4 +35,5 @@ package selectable {
 
     override def toString(): String = parent.tableName + "." + databaseName + "(" + columnType + ") " + propertyName
   }
+
 }

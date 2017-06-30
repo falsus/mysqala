@@ -1,7 +1,7 @@
 package com.github.falsus.mysqala.nameresolver
 
 object Util {
-  def camelToUnderScore(name: String) = {
+  def camelToUnderScore(name: String): String = {
     var prevUpperCase = true
 
     name.map { c =>
@@ -11,7 +11,7 @@ object Util {
           "_"
         } else {
           ""
-        }) + c.toLowerCase
+        }) + c.toLower
       } else {
         prevUpperCase = false
         c
@@ -19,7 +19,7 @@ object Util {
     }.mkString
   }
 
-  def toPluralForm(name: String) = {
+  def toPluralForm(name: String): String = {
     if (name.endsWith("s")) {
       name + "es"
     } else if (name.endsWith("y")) {

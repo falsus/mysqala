@@ -1,16 +1,18 @@
 package com.github.falsus.mysqala
 
-import selectable.{ Selectable, Column, WildCard, WildCardInTable }
-import connection.ConnectionManager
-import condition.Condition
-import table.Table
-import util.Using
+import com.github.falsus.mysqala.connection.ConnectionManager
+import com.github.falsus.mysqala.selectable.{Column, Selectable, WildCard, WildCardInTable}
+import com.github.falsus.mysqala.table.Table
+import com.github.falsus.mysqala.util.Using
+
+import scala.collection.mutable
 
 package query {
-  import scala.collection.mutable.{ ListBuffer, LinkedHashMap }
+
+  import scala.collection.mutable.ListBuffer
 
   class SelectQuery(val insertQuery: Option[InsertQuery[_]], val connManager: ConnectionManager, colsArray: Selectable*) extends WhereQuery[SelectQuery] with Using {
-    override val subInstance = this
+    override val subInstance: SelectQuery = this
     private val columns: List[Selectable] = colsArray.toList
 
     def freeze(): FreezedSelectQuery = {
@@ -20,21 +22,19 @@ package query {
     private def conn = connManager.connection
 
     override def build(values: ListBuffer[Any]): String = {
-      (insertQuery match {
-        case Some(insertQuery) => insertQuery.build(values) + " "
-        case _ => ""
-      }) + "SELECT " +
+      insertQuery.map(_.build(values) + " ").getOrElse("") +
+        "SELECT " +
         columns.map { col => col.toRawQuery }.mkString(", ") +
         " FROM " + firstFromTable.toRawQuery(values) +
         buildWhere(values) + buildOrder(values) + buildLimit(values) + buildOffset(values)
     }
 
-    override def executeUpdate() = {
-      if (insertQuery == None) {
+    override def executeUpdate(): Int = {
+      if (insertQuery.isEmpty) {
         throw new Exception("damedesu")
       }
 
-      var values = ListBuffer[Any]()
+      val values = ListBuffer[Any]()
 
       using(conn.prepareStatement(build(values))) { stmt =>
         var index = 1
@@ -53,12 +53,12 @@ package query {
       }
     }
 
-    def execute(f: (List[Any]) => Unit) = {
-      if (insertQuery != None) {
+    def execute(f: (List[Any]) => Unit): Unit = {
+      if (insertQuery.isDefined) {
         throw new Exception("damedesu")
       }
 
-      var values = ListBuffer[Any]()
+      val values = ListBuffer[Any]()
       val foundConstructors = findConstructors()
 
       using(conn.prepareStatement(build(values))) { stmt =>
@@ -70,7 +70,7 @@ package query {
             var params = Map[Table[_], Array[AnyRef]]()
 
             def findTable(dbTableName: String): Table[_] = {
-              for ((table, (constructor, columns)) <- foundConstructors) {
+              for ((table, (_, _)) <- foundConstructors) {
                 if (table.tableName equalsIgnoreCase dbTableName) {
                   return table
                 }
@@ -82,7 +82,7 @@ package query {
             val metaData = rs.getMetaData
             for (i <- 1 to metaData.getColumnCount) {
               val table = findTable(metaData.getTableName(i))
-              val (constructor, columns) = foundConstructors(table)
+              val (_, columns) = foundConstructors(table)
 
               if (!params.contains(table)) {
                 params += table -> new Array[AnyRef](columns.length)
@@ -94,7 +94,7 @@ package query {
 
             var models = ListBuffer[Any]()
 
-            for ((table, (constructor, columns)) <- foundConstructors) {
+            for ((table, (constructor, _)) <- foundConstructors) {
               models += constructor.newInstance(params(table): _*)
             }
 
@@ -104,8 +104,8 @@ package query {
       }
     }
 
-    def findConstructors() = {
-      var selectingModels = LinkedHashMap[Table[_], ListBuffer[Column[_, _]]]()
+    def findConstructors(): Map[Table[_], (java.lang.reflect.Constructor[_], List[Column[_, _]])] = {
+      var selectingModels = mutable.LinkedHashMap[Table[_], ListBuffer[Column[_, _]]]()
 
       def addSelectingColumn(table: Table[_], columns: Column[_, _]*) {
         if (!selectingModels.contains(table)) {
@@ -123,28 +123,28 @@ package query {
         column match {
           case col: Column[_, _] => addSelectingColumn(col.parent, col)
           case wildCardInTable: WildCardInTable => addSelectingColumn(wildCardInTable.table, wildCardInTable.table.columns: _*)
-          case wildCard: WildCard =>
+          case _: WildCard =>
             var fromTable: Option[FromTable[_]] = Some(firstFromTable)
 
-            while (fromTable != None) {
+            while (fromTable.isDefined) {
               addSelectingColumn(fromTable.get.table, fromTable.get.table.columns: _*)
               fromTable = fromTable.get.nextTable
             }
         }
       }
 
-      var foundConstructors = LinkedHashMap[Table[_], Tuple2[java.lang.reflect.Constructor[_], List[Column[_, _]]]]()
+      var foundConstructors = mutable.LinkedHashMap[Table[_], (java.lang.reflect.Constructor[_], List[Column[_, _]])]()
       val classPool = javassist.ClassPool.getDefault
 
-      classPool.insertClassPath(new javassist.ClassClassPath(this.getClass()))
+      classPool.insertClassPath(new javassist.ClassClassPath(this.getClass))
 
       for ((table, columns) <- selectingModels) {
         val c = classPool.get(table.tableClass.getName)
 
         for {
-          m <- c.getConstructors()
+          m <- c.getConstructors
           if columns.length == m.getParameterTypes.length
-          code = m.getMethodInfo().getAttribute("Code").asInstanceOf[javassist.bytecode.CodeAttribute]
+          code = m.getMethodInfo.getAttribute("Code").asInstanceOf[javassist.bytecode.CodeAttribute]
           lval = code.getAttribute("LocalVariableTable").asInstanceOf[javassist.bytecode.LocalVariableAttribute]
           if lval != null
         } {
@@ -152,7 +152,7 @@ package query {
 
           val paramNames = for {
             i <- 0 until types.length
-            name = lval.getConstPool().getUtf8Info(lval.nameIndex(i + 1))
+            name = lval.getConstPool.getUtf8Info(lval.nameIndex(i + 1))
           } yield name
 
           var matched = true
@@ -169,12 +169,16 @@ package query {
 
             for {
               i <- 0 until types.length
-              name = lval.getConstPool().getUtf8Info(lval.nameIndex(i + 1))
+              name = lval.getConstPool.getUtf8Info(lval.nameIndex(i + 1))
             } {
               columns.find(_.propertyName == name) match {
                 case Some(column) =>
                   columnsForConstructor += column
-                  paramTypes += (types(i).getName match { case "int" => classOf[Int] case "long" => classOf[Long] case typeName: String => Class.forName(typeName) })
+                  paramTypes += (types(i).getName match {
+                    case "int" => classOf[Int]
+                    case "long" => classOf[Long]
+                    case typeName: String => Class.forName(typeName)
+                  })
                 case _ =>
                   println("not found " + name)
               }
@@ -186,7 +190,8 @@ package query {
 
       }
 
-      foundConstructors
+      foundConstructors.toMap
     }
   }
+
 }

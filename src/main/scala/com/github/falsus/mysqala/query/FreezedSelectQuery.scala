@@ -1,23 +1,24 @@
 package com.github.falsus.mysqala
 
-import connection.ConnectionManager
-import table.Table
-import selectable.Column
-import condition.PlaceHolder
-import querystring.{ QueryString, DynamicQueryString, FixedQueryString }
-import util.Using
+import com.github.falsus.mysqala.condition.PlaceHolder
+import com.github.falsus.mysqala.connection.ConnectionManager
+import com.github.falsus.mysqala.querystring.{DynamicQueryString, FixedQueryString, QueryString}
+import com.github.falsus.mysqala.selectable.Column
+import com.github.falsus.mysqala.table.Table
+import com.github.falsus.mysqala.util.Using
 
 package query {
+
   import scala.collection.mutable.ListBuffer
 
-  class FreezedSelectQuery(val freezedValues: List[_], val queryStrings: List[QueryString], val foundConstructors: Map[Table[_], Tuple2[java.lang.reflect.Constructor[_], List[Column[_, _]]]], val connManager: ConnectionManager) extends Using {
-    def mergeValues(dynamicValues: Seq[_]) = {
+  class FreezedSelectQuery(val freezedValues: List[_], val queryStrings: List[QueryString], val foundConstructors: Map[Table[_], (java.lang.reflect.Constructor[_], List[Column[_, _]])], val connManager: ConnectionManager) extends Using {
+    def mergeValues(dynamicValues: Seq[_]): ListBuffer[_] = {
       val values = ListBuffer[Any]()
       var current = 0
 
       for (freezedValue <- freezedValues) {
         freezedValue match {
-          case p: PlaceHolder =>
+          case _: PlaceHolder =>
             values.append(dynamicValues(current))
             current += 1
           case _ => values.append(freezedValue)
@@ -45,15 +46,13 @@ package query {
       currentIndex
     }
 
-    def execute(dynamicValues: Any*)(f: (Iterable[_]) => Unit) = {
+    def execute(dynamicValues: Any*)(f: (Iterable[_]) => Unit): Unit = {
       val values = mergeValues(dynamicValues)
       val valuesTmp = values.clone
 
-      val query = queryStrings.map { queryString =>
-        queryString match {
-          case d: DynamicQueryString => d.build(valuesTmp)
-          case f: FixedQueryString => f.rawString
-        }
+      val query = queryStrings.collect {
+        case d: DynamicQueryString => d.build(valuesTmp)
+        case f: FixedQueryString => f.rawString
       }.mkString
 
       using(connManager.connection.prepareStatement(query)) { stmt =>
@@ -66,9 +65,9 @@ package query {
 
             def findTable(dbTableName: String): Table[_] = {
               foundConstructors.find {
-                case (table, (constructor, columns)) => table.tableName equalsIgnoreCase dbTableName
+                case (table, (_, _)) => table.tableName equalsIgnoreCase dbTableName
               } match {
-                case Some((table, (constructor, columns))) => table
+                case Some((table, (_, _))) => table
                 case None => null
               }
             }
@@ -76,7 +75,7 @@ package query {
             val metaData = rs.getMetaData
             for (i <- 1 to metaData.getColumnCount) {
               val table = findTable(metaData.getTableName(i))
-              val (constructor, columns) = foundConstructors(table)
+              val (_, columns) = foundConstructors(table)
 
               if (!params.contains(table)) {
                 params += table -> new Array[AnyRef](columns.length)
@@ -86,8 +85,8 @@ package query {
               params(table)(columns.indexOf(column)) = column.toField(rs, i)
             }
 
-            var models = for {
-              (table, (constructor, columns)) <- foundConstructors
+            val models = for {
+              (table, (constructor, _)) <- foundConstructors
               model = constructor.newInstance(params(table): _*)
             } yield model
 
@@ -97,4 +96,5 @@ package query {
       }
     }
   }
+
 }

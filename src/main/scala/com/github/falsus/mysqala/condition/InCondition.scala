@@ -1,8 +1,9 @@
 package com.github.falsus.mysqala
 
-import selectable.Column
+import com.github.falsus.mysqala.selectable.Column
 
 package condition {
+
   import scala.collection.mutable.ListBuffer
 
   class InCondition[A, B](col1: Column[A, B], values: Seq[B]) extends Condition {
@@ -14,4 +15,5 @@ package condition {
       col1.toRawQuery + " IN(" + values.mkString(", ") + ")"
     }
   }
+
 }
