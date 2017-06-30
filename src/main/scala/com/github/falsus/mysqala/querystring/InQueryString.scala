@@ -12,7 +12,7 @@ package querystring {
 
       column.toRawQuery +
         (value match {
-          case l: Seq[_] => " IN(" + l.map { v => "?" }.mkString(", ") + ")"
+          case l: Seq[_] => " IN(" + l.map { _ => "?" }.mkString(", ") + ")"
           case _ => throw new Exception("must be List")
         })
     }

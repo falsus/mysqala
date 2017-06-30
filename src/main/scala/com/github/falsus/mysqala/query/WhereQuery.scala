@@ -11,13 +11,13 @@ package query {
   abstract class WhereQuery[A] extends Query {
     protected def subInstance: A
 
-    protected var firstFromTable: FromTable[_] = null
-    private var firstWhereCondition: Condition = null
-    private var orderedColumns: Seq[OrderedColumn] = null
+    protected var firstFromTable: FromTable[_] = _
+    private var firstWhereCondition: Condition = _
+    private var orderedColumns: Seq[OrderedColumn] = _
     private var whereConditions: ListBuffer[(Condition, Boolean)] = ListBuffer[(Condition, Boolean)]()
     private var limitOption: Option[Int] = None
     private var offsetOption: Option[Int] = None
-    private var lastJoinTable: FromTable[_] = null
+    private var lastJoinTable: FromTable[_] = _
 
     class FromTable[A](val table: Table[A], var on: Option[Condition] = None) {
       var next: Option[FromTable[_]] = None
@@ -30,7 +30,7 @@ package query {
       }
 
       def toRawQuery(values: ListBuffer[Any]): String = {
-        (if (on != None) " JOIN " else "") + table.toRawQuery +
+        (if (on.nonEmpty) " JOIN " else "") + table.toRawQuery +
           (on match {
             case Some(cond) => " ON " + cond.toRawQuery(values)
             case _ => ""
@@ -110,8 +110,8 @@ package query {
     def OFFSET(off: Int) = offset(off)
 
     def buildWhere(values: ListBuffer[Any]): String = {
-      if (firstWhereCondition == null || !whereConditions.isEmpty) {
-        ""
+      if (firstWhereCondition == null || whereConditions.isEmpty) {
+        return ""
       }
 
       whereConditions.foldLeft("") { (prev, cur) =>
@@ -148,7 +148,7 @@ package query {
     }
 
     def buildLimit(values: ListBuffer[Any]): String = {
-      if (limitOption == None) {
+      if (limitOption.isEmpty) {
         return ""
       }
 
@@ -157,7 +157,7 @@ package query {
     }
 
     def buildOffset(values: ListBuffer[Any]): String = {
-      if (offsetOption == None) {
+      if (offsetOption.isEmpty) {
         return ""
       }
 
