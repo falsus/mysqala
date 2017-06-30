@@ -8,16 +8,19 @@ import scala.collection.mutable.ListBuffer
 
 package query {
 
+  import java.util.Properties
+
+  import org.h2.jdbc.JdbcConnection
   import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
   class InsertQueryTest extends FlatSpec with Matchers with Using with BeforeAndAfterAll {
-    val connection = java.sql.DriverManager.getConnection("jdbc:h2:mem:InsertQueryTest;MODE=MySQL")
+    org.h2.Driver.load()
+    val connection = new JdbcConnection("jdbc:h2:mem:InsertQueryTest;MODE=MySQL", new Properties())
     lazy val users = new UserTable(new SingleConnectionManager(connection))
     lazy val messages = new MessageTable(new SingleConnectionManager(connection))
 
     override def beforeAll() = {
       table.Table.simpleTableNames.clear()
-      org.h2.Driver.load()
 
       using(connection.prepareStatement("DROP TABLE IF EXISTS users;CREATE TABLE users(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))")) { stmt =>
         stmt.executeUpdate()
@@ -41,7 +44,7 @@ package query {
 
     "build" should "Callable SQL like command with SELECT" in {
       val id = users.getIntColumn("id")
-      val q = users.INSERT INTO (id) SELECT (id) FROM users WHERE id == 20
+      val q = users.INSERT INTO (id) SELECT (id) FROM users WHERE id == Some(20)
       val values = ListBuffer[Any]()
       val tableName = users.shortDatabaseTableName
 

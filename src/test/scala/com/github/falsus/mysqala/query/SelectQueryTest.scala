@@ -8,16 +8,19 @@ import scala.collection.mutable.ListBuffer
 
 package query {
 
+  import java.util.Properties
+
+  import org.h2.jdbc.JdbcConnection
   import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
   class SelectQueryTest extends FlatSpec with Matchers with Using with BeforeAndAfterAll {
-    val connection = java.sql.DriverManager.getConnection("jdbc:h2:mem:SelectQueryTest;MODE=MySQL")
+    org.h2.Driver.load()
+    val connection = new JdbcConnection("jdbc:h2:mem:SelectQueryTest;MODE=MySQL", new Properties())
     lazy val users = new UserTable(new SingleConnectionManager(connection))
     lazy val messages = new MessageTable(new SingleConnectionManager(connection))
 
     override def beforeAll() = {
       table.Table.simpleTableNames.clear()
-      org.h2.Driver.load()
 
       using(connection.prepareStatement("DROP TABLE IF EXISTS users;CREATE TABLE users(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))")) { stmt =>
         stmt.executeUpdate()
@@ -38,7 +41,7 @@ package query {
 
     "SelectQuery" should "Callable SQL like command with WHERE" in {
       val id = users.getIntColumn("id")
-      val q = users.SELECT(users.*) FROM users WHERE id == 10
+      val q = users.SELECT(users.*) FROM users WHERE id == Some(10)
       val values = ListBuffer[Any]()
 
       "SELECT u.* FROM users u WHERE u.id = ?" should be(q.build(values))
@@ -107,8 +110,8 @@ package query {
       val message = messages.getStringColumn("message")
       val parentMessageId = messageTableForInnerJoin.getIntColumn("parentMessageId")
       val tableName2 = messageTableForInnerJoin.shortDatabaseTableName
-      val q = users.SELECT(users.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == 8 OR (messageId == 10 AND message == "hello") ORDER_BY (id ASC) LIMIT 11 OFFSET 12
-      var values = ListBuffer[Any]()
+      val q = users.SELECT(users.*) FROM users JOIN messages ON id == userId JOIN messageTableForInnerJoin ON messageId == parentMessageId WHERE id == Some(8) OR (messageId == Some(10) AND message == Some("hello")) ORDER_BY (id ASC) LIMIT 11 OFFSET 12
+      val values = ListBuffer[Any]()
 
       "SELECT u.* FROM users u JOIN messages m ON u.id = m.user_id JOIN messages " + tableName2 + " ON m.id = " + tableName2 + ".parent_message_id WHERE u.id = ? OR (m.id = ? AND m.message = ?) ORDER BY u.id LIMIT ? OFFSET ?" should be(q.build(values))
       values.length should be(5)

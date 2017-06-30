@@ -8,7 +8,7 @@ package selectable {
   import java.sql.ResultSet
 
   class DateColumn[A](parent: Table[A], propertyName: String, databaseName: String, propertyType: Class[_], columnType: Class[_]) extends Column[A, java.util.Date](parent, propertyName, databaseName, propertyType, columnType) {
-    def ==(value: java.util.Date): SameValueCondition[A, java.util.Date] = new SameValueCondition(this, value)
+    def ==(value: Option[java.util.Date]): SameValueCondition[A, java.util.Date] = new SameValueCondition(this, value)
 
     def between(value: java.util.Date): Condition = null
 

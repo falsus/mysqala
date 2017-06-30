@@ -10,17 +10,20 @@ import scala.collection.mutable.ListBuffer
 
 package query {
 
+  import java.util.Properties
+
+  import org.h2.jdbc.JdbcConnection
   import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
   class FreezedSelectQueryTest extends FlatSpec with Matchers with Using with BeforeAndAfterAll {
-    val connection = java.sql.DriverManager.getConnection("jdbc:h2:mem:FreezedSelectQueryTest;MODE=MySQL")
+    org.h2.Driver.load()
+    val connection = new JdbcConnection("jdbc:h2:mem:FreezedSelectQueryTest;MODE=MySQL", new Properties())
     lazy val users = new UserTable(new SingleConnectionManager(connection))
     lazy val messages = new MessageTable(new SingleConnectionManager(connection))
     lazy val name = users.getStringColumn("name")
 
     override def beforeAll() = {
       table.Table.simpleTableNames.clear()
-      org.h2.Driver.load()
 
       using(connection.prepareStatement("DROP TABLE IF EXISTS users;CREATE TABLE users(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))")) { stmt =>
         stmt.executeUpdate()
